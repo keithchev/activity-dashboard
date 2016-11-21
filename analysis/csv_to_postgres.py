@@ -25,12 +25,12 @@ conn.autocommit = True
 cur = conn.cursor()
 
 # delete the csv table in the cycling database if it exists
-# cur.execute("""drop table activities;""")
+cur.execute("""DROP TABLE IF EXISTS activities_detail""")
 
 # create the table (columns are manually specified: alt,cad,dst,hrt,lat,lon,pwr,spd,time,tmp,sec,id)
 
 sql_create = """
-        CREATE TABLE activities (
+        CREATE TABLE activities_detail (
         alt decimal,
         cad decimal,
         dst decimal, 
@@ -47,9 +47,9 @@ sql_create = """
         
 cur.execute(sql_create)
 
-print('created table activities')
+print('created table activities_detail')
 
-sql_copy = """ COPY activities FROM %s CSV HEADER """   
+sql_copy = """ COPY activities_detail FROM %s CSV HEADER """   
 
 csvFilenames = glob.glob(csvDir + '*.csv')
 

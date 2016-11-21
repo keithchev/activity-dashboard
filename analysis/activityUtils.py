@@ -45,19 +45,20 @@ def makePreviewTable(csvDir, pw):
         cur.execute(sql_copy, (csvFilename,))
 
     
-def makeDetailTable(csvDir):
+def makeDetailTable(csvDir, pw):
     
     try:
         conn = psycopg2.connect("dbname='cycling' user='postgres' host='localhost' password='" + pw + "'")
     except:
-        print "unable to connect to database"
+        print("unable to connect to database")
         return
         
     conn.autocommit = True
     cur = conn.cursor()
     
     # delete the csv table in the cycling database if it exists
-    # cur.execute("""drop table activities;""")
+    cur.execute("""DROP TABLE IF EXISTS activities_detail""")
+
     
     # create the table (columns are manually specified: alt,cad,dst,hrt,lat,lon,pwr,spd,time,tmp,sec,id)
 
@@ -70,7 +71,7 @@ def makeDetailTable(csvDir):
     # (and there is real missing data in the FIT files - occasional rows have no power entries, for example)
 
     sql_create = """
-            CREATE TABLE activities (
+            CREATE TABLE activities_detail (
             alt decimal,
             cad decimal,
             dst decimal, 
@@ -87,7 +88,7 @@ def makeDetailTable(csvDir):
             
     cur.execute(sql_create)
     
-    sql_copy = """ COPY activities FROM %s CSV HEADER """   
+    sql_copy = """ COPY activities_detail FROM %s CSV HEADER """   
     
     csvFilenames = glob.glob(csvDir + '*.csv')
 
@@ -101,7 +102,6 @@ def makeDetailTable(csvDir):
 def makeDownsampledTracks(csvDir):
     
     csvFilenames = glob.glob(csvDir + '*.csv')
-    
     for csvFilename in csvFilenames:
 
         csvPreviewFilename = csvFilename.replace('\\2016\\', '\\2016\\preview\\').replace('.csv', '_preview.csv')
@@ -124,16 +124,33 @@ def makeDownsampledTracks(csvDir):
         writeActivityCSV(lonlat_sub,csvPreviewFilename)       
         
         print(csvFilename)
+        
 
-
-
-
+def mergeDownsampledTracks(csvDir, mergedFilename):
+    
+    mergedData = []
+    
+    csvFilenames = glob.glob(csvDir + '*.csv')
+    for csvFilename in csvFilenames:
+        
+        data = pd.read_csv(csvFilename)
+        if not len(mergedData):
+            mergedData = data
+            continue
+        
+        mergedData = pd.concat([mergedData, data])
+        
+    writeActivityCSV(mergedData, mergedFilename)
+        
     
 def interpolateActivityData(csvFilename):
     data = pd.read_csv(csvFilename)
+    # need to write this
     
     
 def calcActivityParamsFromCSV(arg):
+    
+    # calc various activities stats from a FIT-file-derived CSV file
     
     if type(arg) is str:
         data = pd.read_csv(arg)
@@ -170,14 +187,19 @@ def calcActivityParamsFromCSV(arg):
     
     pwr = data.pwr.multiply(data.sec.diff())
     
-    params['total_work']       = pwr.sum()/1000. # in kJ
+    params['total_work']       = pwr.sum()*dt/1000. # in kJ
     params['average_power']    = pwr.mean()
-    params['normalized_power'] = calcNormalizedPower(data)
+    
+    pwrMovingAv = calcPwrMovingAverage(data)
+    
+    params['normalized_power'] = (pwrMovingAv[~np.isnan(pwrMovingAv)]**4).mean()**.25
     
     return params
     
+    
 def addFieldsToMetadata(metadataFilename):
     
+    # add calculated stats from each FIT-derived CSV file to the metadata file
     md = pd.read_csv(metadataFilename)
      
     for ind, row in md.iterrows():
@@ -194,13 +216,17 @@ def addFieldsToMetadata(metadataFilename):
 
 
 def calcMovingTime(data):
+    # need to write this
     return 0
     
-def calcNormalizedPower(data):
     
-    # window in which to first average power data before exponentiating it
-    # this is the value Coggan et al use (30 seconds)
-    WINDOW_SIZE = 30
+def calcPwrMovingAverage(data):
+    
+    # here we average the raw power data in a window, which is the first step
+    # in calculating normalized power
+    
+    # this is the window size Coggan et al use (30 seconds)
+    WINDOW_SIZE = 30 # **in seconds**
     
     dt = data.sec.diff()
     dt[0] = 0
@@ -209,23 +235,41 @@ def calcNormalizedPower(data):
     
     for ind in np.arange(0, data.shape[0], 30):
         
-        # here we assume that dt is rarely less than one second
-        elapsed_time = np.cumsum(np.array(dt[ind:ind + WINDOW_SIZE + 10]))
-
-        # skip if we are near a pause, or the end, so there are few data points in the 30-second window        
+        # here we assume that dt is rarely less than one second to define an ROI that will span the window
+        ROI_SIZE = WINDOW_SIZE + 10
+        
+        # relative elapsed time (from window start at ind)
+        elapsed_time = np.cumsum(np.array(dt[ind:ind + ROI_SIZE]))
+        
+        # skip this window if it contains too few data point - i.e., window spans a long pause
         if ( (elapsed_time < WINDOW_SIZE).sum() < 10 ):
             continue
         
-        pwr_crop = data.pwr[ind:ind + WINDOW_SIZE + 10]
+        # crop a region of interest
+        pwr_crop        = data.pwr[ind:ind + ROI_SIZE]
+        pwr_window_crop = pwr_window[ind:ind + ROI_SIZE]
             
-        pwr_window[ind] = pwr_crop[elapsed_time < WINDOW_SIZE].mean()
+        # assign the mean power in this window to every time point in pwr_window
+        pwr_window_crop[elapsed_time <= WINDOW_SIZE] = pwr_crop[elapsed_time <= WINDOW_SIZE].mean()
         
+        # insert this chunk of mean power back into the full pwr_window array
+        pwr_window[ind:ind + ROI_SIZE] = pwr_window_crop
         
-    normalized_power = (pwr_window[~np.isnan(pwr_window)]**4).mean()**.25
-        
-    return normalized_power
+    return pwr_window
+
+
+def addFieldToCSV(csvDir, metadataFilename):
+    # add a new (derived, obviously) field to each CSV activity file
+    # written to add 30-second power moving average in order to rapidly calculate
+    # the NP for a brush-selected region of an activity in the dashboard
+    # 11/16/2016
+    # need to write this - or perhaps implement in js
+    return
+
 
 def updateMetadata(csvDir, metadataFilename):
+    
+    # add new csv files (written from new FIT files) to the existing metadata file
     
     csvFilenames = glob.glob(csvDir + '*.csv')
 
@@ -294,6 +338,9 @@ def createMetadata(csvDir, rewriteIDs=0):
 
     
 def FILENAME_TO_ID(filename):
+    
+    # this should not be changed - simple algorithm to generate a unique 
+    # ID (essentially start date and time) from an activity filename
 
     activityID = filename.split('\\')[-1].split('.')[0].replace('-','')
     return activityID    

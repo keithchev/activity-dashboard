@@ -150,6 +150,7 @@ function makeAltPlot(rideDetailData, xParam) {
       lpp = loadActivityProps().linePlotProps;
 
   var svg, svgG, xParam = getXParam(), targetDiv, XScale;
+  var xParam = getXParam();
 
   lpp.padB = 20;
 
@@ -186,6 +187,8 @@ function makeAltPlot(rideDetailData, xParam) {
 
     svgG.append("g").attr("class", "brush");
 
+    xParam = getXParam();
+    
     altPlot.update();
     return altPlot;
 
@@ -299,7 +302,7 @@ function makeLinePlot(rideDetailData) {
 
   linePlot.xParam = function(_) {
     if(!arguments.length) return xParam;
-    if(val!=xParam) resetXAxis = 1; 
+    if(_!=xParam) resetXAxis = 1; 
     xParam = _;
     return linePlot;
   }
@@ -535,14 +538,18 @@ function makeHistogram(rideDetailData) {
   var lpp = loadActivityProps().linePlotProps;
   var hpp = loadActivityProps().histogramProps;
 
-  var svg, XScaleHist, YScaleHist, YScaleHistTot, histBinsTotal, histBinsBrush;
+  var svg, paramBins, binPosScale, binHeightScale, binHeightScaleTot, histBinsTotal, histBinsBrush;
 
   var dt = rideDetailData[1].sec - rideDetailData[0].sec;
 
+  // use lineplot props (i.e., padding) for hist)
+  hpp.padT = lpp.padT;
+  hpp.padB = lpp.padB;
+  hpp.height = lpp.height;
 
-  function histogram(div) {
+  var horizontalRange, verticalRange;
 
-  }
+  function histogram(div) { }
 
   histogram.field = function(_) {
     if (!arguments.length) return field;
@@ -575,34 +582,50 @@ function makeHistogram(rideDetailData) {
 
     var svgG = svg.append("g").attr("transform", "translate(" + hpp.padL + "," + hpp.padT + ")");
 
+    horizontalRange = +svg.attr("width") - hpp.padL - hpp.padR;
+    verticalRange   = hpp.height - hpp.padT - hpp.padB;
+
     svgG.append("path").attr("id", "total-hist-area");
     svgG.append("g").attr("id", "bin-container");
 
+    // this axis is vertical (histogram is tilted on its side)
     svgG.append("g")
         .attr("class", "axis")
-        .attr("id", "x-axis")
-        .attr("transform", "translate(0," + (hpp.height - hpp.padT - hpp.padB) + ")");
+        .attr("id", "bin-position-axis")
+        .attr("transform", "translate(0," + 0 + ")");
 
-    svgG.append("g")
-        .attr("class", "axis")
-        .attr("id", "y-axis")
-        .attr("transform", "translate(" + (0) + ",0)");
+    // svgG.append("g")
+    //     .attr("class", "axis")
+    //     .attr("id", "bin-height-axis")
+    //     .attr("transform", "translate(" + (0) + ",0)");
 
     svgG.append("g").append("text").attr("class", "hist-max-label");
+
+    // this code is copied from lineplot.update - eliminate repetition if possible
+    if (!Object.keys(adp.paramDomains).includes(field)) {
+      adp.paramDomains[field] = [ d3.min(rideDetailData, function(d){return d[field]; }), 
+                                  d3.max(rideDetailData, function(d){return d[field]; }) ];
+      adp.paramBinSizes[field] = (adp.paramDomains[field][1] - adp.paramDomains[field][0])/10;
+    }
+
+    paramBins = d3.range( adp.paramDomains[field][0], 
+                              adp.paramDomains[field][1] + adp.paramBinSizes[field], 
+                              adp.paramBinSizes[field] );
     
-    XScaleHist = d3.scaleLinear()
-                   .range([0, +svg.attr("width") - hpp.padL - hpp.padR])
-                   .domain([adp.paramBins[field][0], adp.paramBins[field].slice(-1)[0]]);
+    binPosScale = d3.scaleLinear()
+                   .range([verticalRange, 0])
+                   .domain(adp.paramDomains[field]);
     
     histBinsTotal = d3.histogram()
-                          .domain(XScaleHist.domain())
-                          .thresholds(adp.paramBins[field])
+                          .domain(binPosScale.domain())
+                          .thresholds(paramBins)
                           (rideDetailData.map( function(d) { return d[field]; }));
 
-    YScaleHistTot = d3.scaleLinear()
-                          .range([ 0, hpp.height - hpp.padT - hpp.padB ])
+    binHeightScaleTot = d3.scaleLinear()
+                          .range([ 0, horizontalRange ])
                           .domain([d3.max(histBinsTotal, function(bin) { return bin.length; }), 0]);
-                   
+
+    binHeightScale = d3.scaleLinear().range([ 0, horizontalRange ]);
 
     histogram.update();
 
@@ -611,31 +634,30 @@ function makeHistogram(rideDetailData) {
 
   histogram.update = function() {
 
+
     var histBinsBrush = d3.histogram()
-                          .domain(XScaleHist.domain())
-                          .thresholds(adp.paramBins[field])
+                          .domain(binPosScale.domain())
+                          .thresholds(paramBins)
                           (DB.rideDetailDataBrushed.map( function(d) { return d[field]; }));
 
-    var YScaleHist = d3.scaleLinear()
-                       .range([ 0, hpp.height - hpp.padT - hpp.padB ])
-                       .domain([d3.max(histBinsBrush, function(bin) { return bin.length; }), 0]);
+    binHeightScale.domain([d3.max(histBinsBrush, function(bin) { return bin.length; }), 0]);
 
     var meanSelection = d3.mean(DB.rideDetailDataBrushed, function(d) { return d[field]; });
 
-    var XAxisHist = d3.axisBottom(XScaleHist)
-                      .tickValues([XScaleHist.domain()[0], meanSelection])
+    var binPosAxis = d3.axisLeft(binPosScale)
+                      .tickValues([binPosScale.domain()[0], meanSelection])
                       .tickFormat(lpp.tickFormat[field])
                       .tickSize(0,0);
 
     var histLine = d3.line()
-                     .x( function(d) { return XScaleHist((d.x1 + d.x0)/2); })
-                     .y(function(d) { return YScaleHistTot(d.length); });
+                     .y( function(d) { return binPosScale((d.x1 + d.x0)/2); })
+                     .x(function(d) { return binHeightScaleTot(d.length); });
 
-    var histArea = d3.area()
-                     .x(histLine.x())
-                     .y1(histLine.y())
-                     .y0(YScaleHistTot(0))
-                     .curve(d3.curveBasis);
+    // var histArea = d3.area()
+    //                  .x(histLine.x())
+    //                  .y1(histLine.y())
+    //                  .y0(binHeightScaleTot(0))
+    //                  .curve(d3.curveBasis);
 
 
     binTip = d3.tip().attr("class", "d3-tip")
@@ -648,34 +670,36 @@ function makeHistogram(rideDetailData) {
 
     svg.call(binTip);
 
-    svg.select("#x-axis").call(XAxisHist);
+    svg.select("#bin-position-axis").call(binPosAxis);
 
-    svg.select("#total-hist-area")
-           .attr("d", function(d) { return histArea(histBinsTotal); })
-           .attr("stroke-width", 0)
-           .attr("fill", adp.paramColors[field])
-           .attr("opacity", 0.3);
+    // svg.select("#total-hist-area")
+    //        .attr("d", function(d) { return histArea(histBinsTotal); })
+    //        .attr("stroke-width", 0)
+    //        .attr("fill", adp.paramColors[field])
+    //        .attr("opacity", 0.3);
 
     histBars = svg.select("#bin-container").selectAll("rect").data(histBinsBrush);
 
     histBars.transition()
-            .attr("y", function (bin) { 
-                return YScaleHist(bin.length); })
-            .attr("height", function (bin) { 
-                return YScaleHist.range()[1] - YScaleHist(bin.length); });
+            .attr("x", function (bin) { 
+                return 0*binHeightScale(bin.length); })
+            .attr("width", function (bin) { 
+                return binHeightScale.range()[1] - binHeightScale(bin.length); });
+
+    var binWidth = Math.abs(binPosScale(histBinsBrush[0].x1) - binPosScale(histBinsBrush[0].x0));
 
     histBars.enter().append("rect")
             .attr("class", "bar")
             .attr("stroke", adp.paramColors[field])
             .attr("fill", lightenColor(adp.paramColors[field], .5))
-            .attr("width", function(bin) {
-                return XScaleHist(bin.x1) - XScaleHist(bin.x0); })
-            .attr("height", function (bin) { 
-                return YScaleHist.range()[1] - YScaleHist(bin.length); })
-            .attr("x", function (bin) { 
-                return XScaleHist(bin.x0) + 1; })
+            .attr("height", function(bin) {
+                return binWidth - 2; })
+            .attr("width", function (bin) { 
+                return binHeightScale.range()[1] - binHeightScale(bin.length); })
             .attr("y", function (bin) { 
-                return YScaleHist(bin.length); })
+                return binPosScale(bin.x0) - binWidth; })
+            .attr("x", function (bin) { 
+                return 0*binHeightScale(bin.length); })
             .on("mouseover", function (bin) { 
                 d3.select(this).attr("fill", lightenColor(adp.paramColors[field], 1));
                 bin['units'] = adp.paramUnitsAbbr[field]; 
@@ -687,16 +711,15 @@ function makeHistogram(rideDetailData) {
     histBinsHeight = histBinsBrush.map( function(bin) { return bin.length; });
     maxBarIndex = histBinsHeight.indexOf(d3.max(histBinsHeight));
 
-    maxBarPos = XScaleHist((histBinsBrush[maxBarIndex].x1 + histBinsBrush[maxBarIndex].x0)/2);
+    maxBarPos = binPosScale((histBinsBrush[maxBarIndex].x1 + histBinsBrush[maxBarIndex].x0)/2);
 
     svg.select(".hist-max-label")
-           .attr("transform", "translate( " + maxBarPos + ",-3)")
+           .attr("transform", "translate(" + (horizontalRange-5) + ',' + (maxBarPos - binWidth) + ")")
            .attr("text-anchor", "middle")
            .attr("style", "font-size: 9px;")
            .text(formatTimeTicks(d3.max(histBinsHeight)*dt));
 
-    // color the x axis by the bar color
-    // svg.select("#x-axis").selectAll("path").attr("stroke", adp.paramColors[field]);
+    svg.select("#bin-position-axis").selectAll("text").attr("visibility", "hidden");
 
     return histogram;
 
@@ -736,13 +759,23 @@ function formatTimeTicks(sec) {
     var paramDomains = {
       spd: [0, 40], 
       pwr: [0, 400],
-      hrt: [60, 200],
+      hrt: [90, 200],
       cad: [0, 120],
       vam: [-5000, 3000],
       slp: [-20, 20],
       elg: [0, 5000],
       wrk: [0, 3000],
     };
+
+    var paramBinSizes = {
+      alt: 500,
+      spd: 4,
+      pwr: 25,
+      hrt: 5,
+      cad: 10,
+      vam: 500,
+      slp: 5,
+    }
 
     var paramColors = {
       alt: "rgb(0,0,0)",
@@ -792,15 +825,7 @@ function formatTimeTicks(sec) {
       wrk: "kJ",
     };
 
-    var paramBins = {
-      alt: d3.range(0,10000,500),
-      spd: d3.range(5, 45, 2),
-      pwr: d3.range(0, 450, 25),
-      hrt: d3.range(90, 190, 5),
-      cad: d3.range(50, 100, 5),
-      vam: d3.range(-1000, 2000, 200),
-      slp: d3.range(-15, 15, 2),
-    }
+
 
     var tickFormat = {
       alt: function (tick) { return tickFormatFcn(tick, 1); },
@@ -837,8 +862,8 @@ function formatTimeTicks(sec) {
     };
 
     var histogramProps = {
-      padL: 20, 
-      padR: 0,
+      padL: 10, 
+      padR: 15,
       padT: 15, 
       padB:  10,
       width: 500, relWidth: 1,
@@ -856,7 +881,7 @@ function formatTimeTicks(sec) {
         paramLabels:   paramLabels,
         paramUnits:    paramUnits,
         paramUnitsAbbr: paramUnitsAbbr,
-        paramBins:     paramBins,
+        paramBinSizes:     paramBinSizes,
         linePlotProps: linePlotProps,
         histogramProps: histogramProps,
 

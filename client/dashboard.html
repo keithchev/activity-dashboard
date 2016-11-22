@@ -110,7 +110,7 @@
     rideDetailDataActivityID: 0,
     currentActivityInfo: {},
     currentDateRangeInfo: {start_date: new Date,},
-    rightPanelContent: 'mosaic', // history, detail, or tiles
+    rightPanelContent: 'detail', // history, detail, or mosaic
     dateToKey: d3.timeFormat("%Y-%m-%d"),
     keyToDate: d3.timeParse("%Y-%m-%d"),
 
@@ -221,6 +221,8 @@
 
     DB.currentActivityInfo = DB.rideData.last();
 
+    initMap();
+
     // initialize the panels
     DB.activityList = new ActivityList(d3.select("#div-activity-list"));
     // DB.historyPlot  = new HistoryPlot(d3.select("#div-main-container"));
@@ -236,11 +238,7 @@
     // next load calendar, which will set DB.currentActivityDateRange corresponding to initial currentActivity chosen above
     DB.calendar.load().update();
 
-
-
-
-
-    initMap();
+    debugger;
 
   }
 

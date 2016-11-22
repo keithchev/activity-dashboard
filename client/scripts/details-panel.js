@@ -61,10 +61,10 @@ function makeRideDetailPlots(rideDetailData) {
   div.selectAll("div").remove();
 
   // home of the alt-plot at the top
-  div.append("div").attr("class", "col-sm-8").attr("id", "alt-plot");
+  div.append("div").attr("class", "col-sm-11").attr("id", "alt-plot");
 
   // future home of brushed region stats
-  div.append("div").attr("class", "col-sm-3");
+  div.append("div").attr("class", "col-sm-1");
 
   // bind and initialize the alt plot object
   d3.select("#alt-plot").data( [makeAltPlot(rideDetailData).target(d3.select("#alt-plot")).init()] );
@@ -96,7 +96,7 @@ function makeRideDetailPlots(rideDetailData) {
   plotContainers.selectAll(".hist-plot")
     .data(function(field) {  return [makeHistogram(rideDetailData).field(field[0])]; })
     .enter().append("div")
-    .attr("class", "col-sm-3 hist-plot")
+    .attr("class", "col-sm-4 hist-plot")
     .attr("id", function(histogram) { return histogram.field(); })
     .each( function(histogram) { histogram.target(d3.select(this)).init(); });
 
@@ -155,16 +155,16 @@ function makeAltPlot(rideDetailData, xParam) {
 
   function altPlot() {}
 
-  altPlot.xParam = function(val) {
+  altPlot.xParam = function(_) {
     if (!arguments.length) return xParam; 
-    xParam = val;
+    xParam = _;
     return altPlot;
   }
 
   // this is assumed to be a d3 selection
-  altPlot.target = function(val) {
+  altPlot.target = function(_) {
     if (!arguments.length) return targetDiv;
-    targetDiv = val;
+    targetDiv = _;
     return altPlot;
   }
 
@@ -285,35 +285,35 @@ function makeLinePlot(rideDetailData) {
 
   function linePlot() {};
 
-  linePlot.field = function(val) {
+  linePlot.field = function(_) {
     if (!arguments.length) return field;
-    field = val;
+    field = _;
     return linePlot;
   }
 
-  linePlot.XDomain = function(val) {
+  linePlot.XDomain = function(_) {
     if(!arguments.length) return XDomain;
-    XDomain = val;
+    XDomain = _;
     return linePlot;
   }
 
-  linePlot.xParam = function(val) {
+  linePlot.xParam = function(_) {
     if(!arguments.length) return xParam;
     if(val!=xParam) resetXAxis = 1; 
-    xParam = val;
+    xParam = _;
     return linePlot;
   }
 
-  linePlot.smoothWindow = function(val) {
+  linePlot.smoothWindow = function(_) {
     if (!arguments.length) return smoothWindow;
-    smoothWindow = val;
+    smoothWindow = _;
     return linePlot;
   }
 
   // this is assumed to be a d3 selection
-  linePlot.target = function(val) {
+  linePlot.target = function(_) {
     if (!arguments.length) return targetDiv;
-    targetDiv = val;
+    targetDiv = _;
     return linePlot;
   }
 
@@ -544,21 +544,21 @@ function makeHistogram(rideDetailData) {
 
   }
 
-  histogram.field = function(val) {
+  histogram.field = function(_) {
     if (!arguments.length) return field;
-    field = val;
+    field = _;
     return histogram;
   }
 
-  histogram.target = function(val) {
+  histogram.target = function(_) {
     if (!arguments.length) return targetDiv;
-    targetDiv = val;
+    targetDiv = _;
     return histogram;
   }
 
-  histogram.XDomain = function(val) {
+  histogram.XDomain = function(_) {
     if(!arguments.length) return XDomain;
-    XDomain = val;
+    XDomain = _;
     return histogram;
   }
 

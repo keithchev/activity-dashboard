@@ -7,7 +7,8 @@ function drawActivityDetail() {
 
   d3.selectAll("#div-main-container form").remove();
   d3.selectAll("#div-main-container div").remove();
-
+  d3.selectAll("#div-main-container svg").remove();
+  
   createActivityDetailControls(div);
 
   // write the altitude plot container divs (for now these are hard-coded)
@@ -41,8 +42,6 @@ function drawActivityDetail() {
 
       // load the plots
       makeRideDetailPlots(DB.rideDetailData);
-
-      console.log('JSON loaded');
 
     });
   }
@@ -108,9 +107,6 @@ function makeRideDetailPlots(rideDetailData) {
   //    .each(function (histogram) { histogram.target(d3.select(this)).init(); });
 
 
-  // last step: listeners for the plot controls 
-  d3.select("#details-select-x-axis").on("change", onFormChange);
-  d3.select("#details-input-smoothing").on("change", onFormChange);
 
 }
 
@@ -147,18 +143,6 @@ function getXParam() {
     return ({Time: "sec", Distance: "dst"})[detailsXAxis];
 }
 
-function onFormChange() {
-
-    var xParam = getXParam(),
-        smoothWindow = parseInt(d3.select("#details-input-smoothing").property("value"));
-
-    // update the alt plot
-    d3.select("#alt-plot").each(function (altPlot_) { altPlot_.xParam(xParam).update(); });
-
-    // update each param line plot
-    d3.selectAll(".param-plot").each(function (linePlot_) { linePlot_.smoothWindow(smoothWindow).xParam(xParam).update(); });
-
-}
 
 function makeAltPlot(rideDetailData, xParam) {
 
@@ -374,7 +358,7 @@ function makeLinePlot(rideDetailData) {
 
     svgG.append("path")
         .attr("class", "param-plot-path")
-        .attr("id", "y-axis-path")
+        .attr("id", "data-path")
         .attr("stroke", plotColor)
         .attr("stroke-width", 1)
         .attr("fill", "none");
@@ -418,7 +402,7 @@ function makeLinePlot(rideDetailData) {
     plotLabel = fieldIsPrimitive ? adp.paramLabels[field] : "Derived";
 
     svg.select("text").text(plotLabel);
-    svg.selectAll("path").attr("stroke", plotColor);
+    svg.selectAll(".param-plot-path").attr("stroke", plotColor);
 
     // var fieldFuncSimple  = function(d) { return d.field; };
     // var fieldFuncComplex = function (d) { return d.field1/d.field2; };
@@ -473,7 +457,7 @@ function makeLinePlot(rideDetailData) {
 
     svg.select("#y-axis").call(YAxis);
     
-    svg.select("#y-axis-path").attr("d", function(d) { return paramLine(rideDetailData_); });
+    svg.select("#data-path").attr("d", function(d) { return paramLine(rideDetailData_); });
     svg.select("#mean-path").attr("d", function(d) { return meanLine(meanLineData); });
       
     // for some reason, linePlot.mousemove does not work as a callback here
@@ -711,7 +695,8 @@ function makeHistogram(rideDetailData) {
            .attr("style", "font-size: 9px;")
            .text(formatTimeTicks(d3.max(histBinsHeight)*dt));
 
-    svg.select("#x-axis").selectAll("path").attr("stroke", "#333");//adp.paramColors[field]);
+    // color the x axis by the bar color
+    // svg.select("#x-axis").selectAll("path").attr("stroke", adp.paramColors[field]);
 
     return histogram;
 
@@ -911,6 +896,24 @@ function createActivityDetailControls(div) {
 
   selectionXAxis.property("value", "Time");
   inputSmoothing.property("value", "5");
+
+    // listeners for the plot controls 
+  d3.select("#details-select-x-axis").on("change", onFormChange);
+  d3.select("#details-input-smoothing").on("change", onFormChange);
+
+  function onFormChange() {
+
+      var xParam = getXParam(),
+          smoothWindow = parseInt(d3.select("#details-input-smoothing").property("value"));
+
+      // update the alt plot
+      d3.select("#alt-plot").each(function (altPlot_) { altPlot_.xParam(xParam).update(); });
+
+      // update each param line plot
+      d3.selectAll(".param-plot").each(function (linePlot_) { linePlot_.smoothWindow(smoothWindow).xParam(xParam).update(); });
+
+  }
+
 
 }
 

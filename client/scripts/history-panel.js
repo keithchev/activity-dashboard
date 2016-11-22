@@ -4,21 +4,22 @@ function HistoryPlot(div) {
 
   this.div = div;
   this.div.selectAll("div").remove();
+  this.div.selectAll("svg").remove();
 
   createHistoryPlotControls(this.div);
 
   div.append("div").attr("id", "div-history-plot");
 
-  this.rideData = DB.rideData;
+  this.rideData = DB.rideData.copy();
   this.params   = loadProps().rideParametersByKey;
   this.rideDict = listOfDictsToDictOfLists(this.rideData);
 
   var onChange = this.draw.bind(this);
 
-  selectionParam      = d3.select("#select-parameter").on("change", onChange );
-  selectionConvType   = d3.select("#select-conv-type").on("change", onChange );
-  selectionConvWindow = d3.select("#select-conv-window").on("change", onChange );
-  selectionMeanOrSum  = d3.select("#select-mean-or-sum").on("change", onChange );
+  d3.select("#history-select-parameter").on("change", onChange );
+  d3.select("#history-select-conv-type").on("change", onChange );
+  d3.select("#history-select-conv-window").on("change", onChange );
+  d3.select("#history-select-mean-or-sum").on("change", onChange );
 
 }
 
@@ -75,28 +76,28 @@ HistoryPlot.prototype.load = function () {
 
 HistoryPlot.prototype.draw = function () { 
 
-  var params = loadProps().rideParametersByKey;
+  var params = loadProps().rideParametersByKey,
 
-  DB.historyPlotConvWindow = d3.select("#select-conv-window").property("value");
-  DB.historyPlotParameter  = d3.select("#select-parameter").property("value");
-  DB.historyPlotConvType   = d3.select("#select-conv-type").property("value");
-  DB.historyPlotMeanOrSum  = d3.select("#select-mean-or-sum").property("checked");
+     historyPlotConvWindow = d3.select("#history-select-conv-window").property("value"),
+     historyPlotParameter  = d3.select("#history-select-parameter").property("value"),
+     historyPlotConvType   = d3.select("#history-select-conv-type").property("value"),
+     historyPlotMeanOrSum  = d3.select("#history-select-mean-or-sum").property("checked");
 
   var plotSize = this.plotSize,
       plotPad  = this.plotPad,
       svg = this.svg;
 
-  var XScale, XAxis, XGrid, YScaleParam, YScaleConv, lineConv;
+  var XScale, XAxis, XGrid, YAxisLeft, YAxisRight, YScaleParam, YScaleConv, lineConv;
 
   var date_i = d3.timeDay.offset(d3.min(this.rideDict.timestamp), 0),
       date_f = d3.timeDay.offset(d3.max(this.rideDict.timestamp), 0);
 
   var convData = [];
-  if (DB.historyPlotConvType != "None") {
+  if (historyPlotConvType != "None") {
     convData = calcConvolution(
-                DB.historyPlotConvType, 
-                DB.historyPlotConvWindow*24*3600000, 
-                DB.historyPlotParameter
+                historyPlotConvType, 
+                historyPlotConvWindow*24*3600000, 
+                historyPlotParameter
                 );
   }
 
@@ -111,11 +112,11 @@ HistoryPlot.prototype.draw = function () {
 
   YScaleParam = d3.scaleLinear()
                   .range([ plotSize.h - plotPad.h, plotPad.h ])
-                  .domain(params[DB.historyPlotParameter].range);
+                  .domain(params[historyPlotParameter].range);
 
   YScaleConv = d3.scaleLinear()
                  .range([ plotSize.h - plotPad.h, plotPad.h ])
-                 .domain(params[DB.historyPlotParameter].range); 
+                 .domain(params[historyPlotParameter].range); 
 
   lineConv = d3.line()
                .x(function(d) {return XScale(d.days); })
@@ -124,13 +125,13 @@ HistoryPlot.prototype.draw = function () {
 
   this.svg.select("#history-y-axis-right").attr("visibility", "hidden");
 
-  if (!DB.historyPlotMeanOrSum) {
+  if (!historyPlotMeanOrSum) {
     convData = convData.map(function(d){ d.count = 1; return d; });
     YScaleConv.domain([ YScaleParam.domain()[0], d3.max(convData, function(d) { return d.conv/d.count; }) ]);
     this.svg.select("#history-y-axis-right").attr("visibility", "visible");
   } 
 
-  var tickStep = params[DB.historyPlotParameter].step;
+  var tickStep = params[historyPlotParameter].step;
 
   YAxisLeft = d3.axisLeft(YScaleParam)
                 .tickValues(d3.range(tickStep, YScaleParam.domain()[1], tickStep))
@@ -138,7 +139,7 @@ HistoryPlot.prototype.draw = function () {
 
   YAxisRight = d3.axisRight(YScaleConv).tickSize(0,0,0).ticks(4);
 
-  if (DB.historyPlotParameter == 'total_time_sec') {
+  if (historyPlotParameter == 'total_time_sec') {
     YAxisLeft.tickFormat( function (sec) { return Math.floor(sec/3600) + "h"; });
     YAxisRight.tickFormat( function (sec) { return Math.floor(sec/3600) + "h"; });
   }
@@ -155,7 +156,7 @@ HistoryPlot.prototype.draw = function () {
     .attr("class", "history-dot")
     .attr("r", 5)
     .attr("cx", function(d) { return XScale(d.timestamp); })
-    .attr("cy", function(d) { return YScaleParam(d[DB.historyPlotParameter]); })
+    .attr("cy", function(d) { return YScaleParam(d[historyPlotParameter]); })
     .style("fill", function(d) { return "#0066ff"; })
     .style("opacity", .7)
     .on("mouseover", function() { 
@@ -166,7 +167,7 @@ HistoryPlot.prototype.draw = function () {
       changeActivity(rideDataRow); });
 
   svg.selectAll(".history-dot").transition().duration(500)
-  .attr("cy", function(d) { return YScaleParam(d[DB.historyPlotParameter]); });
+  .attr("cy", function(d) { return YScaleParam(d[historyPlotParameter]); });
 
   // remove the first y axis tick 
   d3.selectAll("#history-y-axis-left g").each( function() { 
@@ -202,50 +203,45 @@ function createHistoryPlotControls(targetDiv) {
   targetDiv.select("form").append("div")
            .attr("class", "form-group").attr("id", "div-history-controls");
   
-  formdiv = targetDiv.select("#div-history-controls");
+  var formdiv = targetDiv.select("#div-history-controls");
 
-  classStr = "form-control form-control-history";
+  var classStr = "form-control form-control-history";
 
-  formdiv.append("label").attr("for", "select-parameter").attr("class", "label-history").text("Parameter: ");
-  formdiv.append("select").attr("class", classStr).attr("id", "select-parameter");
+  formdiv.append("label").attr("for", "history-select-parameter").attr("class", "label-history").text("Parameter: ");
+  formdiv.append("select").attr("class", classStr).attr("id", "history-select-parameter");
 
-  formdiv.append("label").attr("for", "select-conv-type").attr("class", "label-history").text("Convolution type: ");
-  formdiv.append("select").attr("class", classStr).attr("id", "select-conv-type");
+  formdiv.append("label").attr("for", "history-select-conv-type").attr("class", "label-history").text("Convolution type: ");
+  formdiv.append("select").attr("class", classStr).attr("id", "history-select-conv-type");
   
-  formdiv.append("label").attr("for", "select-conv-window").attr("class", "label-history").text("Window size: ");
-  formdiv.append("input").attr("class", classStr).attr("id", "select-conv-window");
+  formdiv.append("label").attr("for", "history-select-conv-window").attr("class", "label-history").text("Window size: ");
+  formdiv.append("input").attr("class", classStr).attr("id", "history-select-conv-window");
 
-  formdiv.append("label").attr("for", "select-mean-or-sum").attr("class", "label-history").text("Show mean: ");
-  formdiv.append("input").attr("type", "checkbox").attr("class", classStr).attr("id", "select-mean-or-sum");
+  formdiv.append("label").attr("for", "history-select-mean-or-sum").attr("class", "label-history").text("Show mean: ");
+  formdiv.append("input").attr("type", "checkbox").attr("class", classStr).attr("id", "history-select-mean-or-sum");
 
-  selectionParam      = d3.select("#select-parameter");
-  selectionConvType   = d3.select("#select-conv-type");
-  selectionConvWindow = d3.select("#select-conv-window");
-  selectionMeanOrSum  = d3.select("#select-mean-or-sum");
+  var historySelectParameter  = d3.select("#history-select-parameter"),
+      historySelectConvType   = d3.select("#history-select-conv-type"),
+      historySelectConvWindow = d3.select("#history-select-conv-window"),
+      historySelectMeanOrSum  = d3.select("#history-select-mean-or-sum");
 
   selectableParams = loadProps().rideParameters.filter( function(row) { return row.range.length!=0; });
   
-  selectionParam.selectAll("option")
+  historySelectParameter.selectAll("option")
                 .data(selectableParams)
                 .enter().append("option")
                 .attr("value", function(d) { return d.key; })
                 .text(function(d) { return d.label; });
 
-  selectionConvType.selectAll("option")
+  historySelectConvType.selectAll("option")
                    .data(['None', 'Window', 'Exponential'])
                    .enter().append("option")
                    .attr("value", function (d) { return d; })
-                   .text(function(d) { return d; });
+                   .text(function(d) { return d; }); 
 
-  if (!('historyPlotParameter' in DB))  DB.historyPlotParameter = "total_distance"; 
-  if (!('historyPlotConv' in DB))       DB.historyPlotConvType = "Exponential"; 
-  if (!('historyPlotConvWindow' in DB)) DB.historyPlotConvWindow = "30"; 
-  if (!('selectionMeanOrSum' in DB))    DB.selectionMeanOrSum = false; 
-
-  selectionParam.property("value", DB.historyPlotParameter);
-  selectionConvType.property("value", DB.historyPlotConvType);
-  selectionConvWindow.property("value", DB.historyPlotConvWindow);
-  selectionMeanOrSum.property("checked", DB.selectionMeanOrSum);
+  historySelectParameter.property("value", "total_distance");
+  historySelectConvType.property("value", "Window");
+  historySelectConvWindow.property("value", "30");
+  historySelectMeanOrSum.property("checked", false);
 
 }
 
@@ -253,7 +249,7 @@ function createHistoryPlotControls(targetDiv) {
 
 function calcConvolution(convType, windowSize, param) {
 
-  var rideData = DB.rideData;
+  var rideData = DB.rideData.copy();
 
   if (convType == 'Window') { calcConvWeight = convWeightWindow; }
   if (convType == 'Exponential') {calcConvWeight = convWeightExp; }

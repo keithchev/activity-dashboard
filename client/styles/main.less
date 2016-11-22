@@ -200,7 +200,7 @@ input:focus {
   background-color: #fff;
   }
 
-#select-conv-window { width: 30px; }
+#history-select-conv-window { width: 30px; }
 
 #div-history-controls { padding-top: 10px;
                         padding-left: 25px;
@@ -241,6 +241,8 @@ input:focus {
   background-color: #ffeccc;
 }
 
+.mosaic-rect { fill: #ffeccc; }
+
 // ------------------------------------------------------
 // 
 // Activity details panel
@@ -255,12 +257,15 @@ input:focus {
 
 #alt-plot-container, 
 .param-plot-container { margin-left: 0px; border-bottom: 1px solid #bbb;}
+
 #alt-plot, .param-plot, .hist-plot { padding-left: 0px; padding-right: 0px;}
 
 #alt-plot-y-axis line { stroke: #aaa; opacity: 0.7; }
 // this includes both the vertical axis line and the top-most horizontal line
 // (with length is controlled by tick width)
 #alt-plot-y-axis path { visibility: hidden; }
+
+.param-plot #y-axis path { stroke: #666; }
 
 .brush .extent {
   stroke: #fff;
@@ -271,7 +276,7 @@ input:focus {
 .axis text {
   font-family: sans-serif;
   font-size: 10px;
-  fill: #000;
+  fill: #333;
 }
 
 .axis-label {
@@ -285,7 +290,7 @@ input:focus {
   opacity: 0.7;
 }
 
-.hist-plot #x-axis path { stroke-width: 1; }
+.hist-plot #x-axis path { stroke: #666; stroke-width: 1; }
 .hist-plot #y-axis path { stroke-width: 0; }
 .hist-plot #y-axis text { font-size: 9px; }
 

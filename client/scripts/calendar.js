@@ -218,7 +218,7 @@ function binActivities(dateList, parameterForColor) {
 
   ridesByDate = dateList.map(function(date) { 
     
-    var rideDataFiltered = DB.rideData.filter( function(ride) { 
+    var rideDataFiltered = DB.rideData.copy().filter( function(ride) { 
       var rideDate = DB.keyToDate(ride.start_date);
       return ( (rideDate.getTime() > date.getTime()) && (rideDate.getTime() <= (date.getTime() + dt)) );
     });

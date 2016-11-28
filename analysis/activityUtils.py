@@ -204,11 +204,17 @@ def addFieldsToMetadata(metadataFilename):
      
     for ind, row in md.iterrows():
         csvFilename = row['filename']
+        print(csvFilename)
         params = calcActivityParamsFromCSV(csvFilename)
         
         for key in params.keys():
-            md[key][ind] = params[key]
-
+            try:
+                md[key]
+            except:
+                md[key] = 0
+                
+            md[key][ind] = params[key]                
+                
     print((100*ind)/md.shape[0])
         
     writeActivityCSV(md, metadataFilename)

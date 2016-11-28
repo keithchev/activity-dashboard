@@ -110,7 +110,7 @@
     rideDetailDataActivityID: 0,
     currentActivityInfo: {},
     currentDateRangeInfo: {start_date: new Date,},
-    rightPanelContent: 'detail', // history, detail, or mosaic
+    rightPanelContent: 'segments', // history, detail, or mosaic, or segments
     dateToKey: d3.timeFormat("%Y-%m-%d"),
     keyToDate: d3.timeParse("%Y-%m-%d"),
 
@@ -194,6 +194,9 @@
     if (DB.rightPanelContent=="mosaic") {
       DB.mosaic = makeMosaic().draw().sort().update();
     }
+    if (DB.rightPanelContent=="segments") {
+      DB.segments = makeSegments();
+    }
   }
 
   function updateRightPanel() {
@@ -206,6 +209,9 @@
     }
     if (DB.rightPanelContent=="mosaic") {
       DB.mosaic.update();
+    }
+    if (DB.rightPanelContent=="segments") {
+      
     }
   }
 
@@ -238,8 +244,6 @@
     // next load calendar, which will set DB.currentActivityDateRange corresponding to initial currentActivity chosen above
     DB.calendar.load().update();
 
-    debugger;
-
   }
 
   function loadRightPanelButtons() {
@@ -250,27 +254,36 @@
       .append("button")
       .attr("class", "btn btn-custom")
       .attr("id", "view-history")
-      .text("View history")
+      .text("History")
       .on("click", handleRightPanelButtonClick);
 
     d3.select("#div-activity-links")
       .append("button")
       .attr("class", "btn btn-custom")
       .attr("id", "view-detail")
-      .text("View detail")
+      .text("Detail")
       .on("click", handleRightPanelButtonClick);
 
     d3.select("#div-activity-links")
       .append("button")
       .attr("class", "btn btn-custom")
       .attr("id", "view-mosaic")
-      .text("View mosaic")
+      .text("Mosaic")
       .on("click", handleRightPanelButtonClick);
+
+    d3.select("#div-activity-links")
+      .append("button")
+      .attr("class", "btn btn-custom")
+      .attr("id", "view-segments")
+      .text("Segments")
+      .on("click", handleRightPanelButtonClick);
+
 
     d3.select("#view-history").attr("class", DB.rightPanelContent=="history" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
     d3.select("#view-detail").attr("class", DB.rightPanelContent=="detail" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
     d3.select("#view-mosaic").attr("class", DB.rightPanelContent=="mosaic" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-
+    d3.select("#view-segments").attr("class", DB.rightPanelContent=="segments" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
+    
     }
 
   function handleRightPanelButtonClick() {
@@ -288,11 +301,15 @@
     if (id=="view-mosaic") {
       DB.rightPanelContent = "mosaic";
     }
+    if (id=="view-segments") {
+      DB.rightPanelContent = "segments";
+    }
 
     d3.select("#view-history").attr("class", DB.rightPanelContent=="history" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
     d3.select("#view-detail").attr("class", DB.rightPanelContent=="detail" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
     d3.select("#view-mosaic").attr("class", DB.rightPanelContent=="mosaic" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-
+    d3.select("#view-segments").attr("class", DB.rightPanelContent=="segments" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
+    
     loadRightPanel(DB.currentActivityInfo); 
 
   }
@@ -355,6 +372,18 @@
   Array.prototype.copy = function(){
       return this.slice(0);
   }
+
+  Array.prototype.unique = function() {
+    var elementsAsKeys = {},
+        uniqueElements = [];
+    for (var i = 0; i < this.length; ++i) {
+        if (!elementsAsKeys.hasOwnProperty(this[i])) {
+            uniqueElements.push(this[i]);
+            elementsAsKeys[this[i]] = 1; // arbitrary value
+        }
+    }
+    return uniqueElements;
+}
 
 
   function listOfDictsToDictOfLists(list) {
@@ -548,8 +577,68 @@
 
 
 
+  function makeSegments() {
+
+    var div = d3.select("#div-main-container");
+
+    d3.selectAll("#div-main-container form").remove();
+    d3.selectAll("#div-main-container div").remove();
+    d3.selectAll("#div-main-container svg").remove();
+    
+    //createSegmentControls(div);
+
+    div.append("div").attr("class", "").attr("id", "segments-plot-container");
+
+    var q = d3.queue();
+
+    var segmentsDir = "./data/segments/";
+    var segmentsList = ["tunnel", "claremont", "south_park_drive",];
+
+    segmentsList.map( function(seg) { q.defer(d3.csv, segmentsDir + seg + "_list.csv"); });
+
+    q.awaitAll( function(err, data) {
+
+      // segmentsList, segmentsDir appear not to be defined here - not sure why
+      debugger;
+      makeSegmentPlots(segmentsList, data);
 
 
+      // list of segment ids (unique() method defined above)
+      segIDs = data[0].map(function(d) { return d.segID; }).unique();
+
+      // list of segment data lists
+      segData = uniqueIDs.map(function(id) { return data[0].filter(function(d) { return d.segID==id; }); });
+
+      // list of corresponding activity ids
+      actIDs = segData.map(function(d) { return d[0].id; }); 
+
+    });
+  }
+
+
+
+  function makeSegmentPlots(segmentsList, data) {
+
+    var div = d3.select("segments-plot-container");
+
+    // do we want a menu to switch between segments? or to display all segments at
+
+    segmentPlots = div.selectAll(".segment-plot")
+                      .data(data).enter()
+                      .append("div")
+                      .attr("class", ".segment-plot");
+
+    // list of all tries
+    segmentPlots.selectAll(".segment-attempt-list");
+
+    // line plots of one param against distance
+    segmentPlots.selectAll(".segment-line-plot");
+
+    // scatter plots of mean params 
+    segmentPlots.selectAll(".segment-scatter-plot");
+
+
+  }
 
 
 

@@ -22,7 +22,7 @@ function drawActivityDetail() {
   if (DB.rideDetailDataActivityID==DB.currentActivityInfo.activity_id) {
       makeRideDetailPlots(DB.rideDetailData);
 
-  // load the data from the postgres databae
+  // load the data from the postgres database
   } else {
 
     DB.rideDetailDataActivityID = DB.currentActivityInfo.activity_id;
@@ -61,16 +61,17 @@ function makeRideDetailPlots(rideDetailData) {
   div.selectAll("div").remove();
 
   // home of the alt-plot at the top
-  div.append("div").attr("class", "col-sm-11").attr("id", "alt-plot");
+  div.append("div").attr("class", "col-sm-8").attr("id", "alt-plot");
 
   // future home of brushed region stats
-  div.append("div").attr("class", "col-sm-1");
+  div.append("div").attr("class", "col-sm-4");
 
   // bind and initialize the alt plot object
   d3.select("#alt-plot").data( [makeAltPlot(rideDetailData).target(d3.select("#alt-plot")).init()] );
 
-  // list of params for line and histogram plot rows - need a list of lists
-  var fields = ['alt','spd', 'pwr', 'hrt', 'cad',].map(function(field) { return [field]; });
+  // list of params for line and histogram plot rows - need a list of lists in order to 
+  // use d3 .data() to bind each one to a div
+  var fields = ['spd', 'pwr', 'hrt', 'cad',].map(function(field) { return [field]; });
 
   // // test case for eventual field plotting text box:
   // var fieldPseudoCode = "spd, pwr, hrt, pwr//hrt";
@@ -252,7 +253,7 @@ function makeAltPlot(rideDetailData, xParam) {
       d3.selectAll(".param-plot").each(function (linePlot_) {
             linePlot_.XDomain(domain).update(); });
 
-      // update the histPlots (which uses DB.rideDetailBrushed)
+      //update the histPlots (which uses DB.rideDetailBrushed)
       d3.selectAll(".hist-plot").each(function (histPlot_) {
             histPlot_.update(); });
 
@@ -278,6 +279,8 @@ function makeLinePlot(rideDetailData) {
 
   var xParam = getXParam();
   var smoothWindow = parseInt(d3.select("#details-input-smoothing").property("value"));
+
+  var rideDetailData_ = smoothRide(rideDetailData, smoothWindow);
 
   var resetXAxis = 0;
 
@@ -310,6 +313,7 @@ function makeLinePlot(rideDetailData) {
   linePlot.smoothWindow = function(_) {
     if (!arguments.length) return smoothWindow;
     smoothWindow = _;
+    rideDetailData_ = smoothRide(rideDetailData, smoothWindow);
     return linePlot;
   }
 
@@ -415,7 +419,6 @@ function makeLinePlot(rideDetailData) {
     //   return function(d){ return scale(fieldFunc(d)); };
     // }
 
-    var rideDetailData_ = smoothRide(rideDetailData, smoothWindow);
 
     // for now, scales and axes are defined from scratch here
     // (though subject to closure so mousemove can access them)
@@ -681,25 +684,25 @@ function makeHistogram(rideDetailData) {
     histBars = svg.select("#bin-container").selectAll("rect").data(histBinsBrush);
 
     histBars.transition()
-            .attr("x", function (bin) { 
-                return 0*binHeightScale(bin.length); })
             .attr("width", function (bin) { 
-                return binHeightScale.range()[1] - binHeightScale(bin.length); });
+                return Math.floor(binHeightScale.range()[1] - binHeightScale(bin.length)); });
 
-    var binWidth = Math.abs(binPosScale(histBinsBrush[0].x1) - binPosScale(histBinsBrush[0].x0));
+    // rounding is necessary to avoid uneven spacing between y-position of histogram rects 
+    // (in y, position appears to be snapped to nearest pixel)
+    var binWidthRaw = Math.abs(binPosScale(histBinsBrush[0].x1) - binPosScale(histBinsBrush[0].x0));
+    var binWidth = Math.floor(binWidthRaw);
 
     histBars.enter().append("rect")
             .attr("class", "bar")
             .attr("stroke", adp.paramColors[field])
             .attr("fill", lightenColor(adp.paramColors[field], .5))
-            .attr("height", function(bin) {
-                return binWidth - 2; })
+            .attr("height", binWidth - 2)
             .attr("width", function (bin) { 
-                return binHeightScale.range()[1] - binHeightScale(bin.length); })
+                return Math.floor(binHeightScale.range()[1] - binHeightScale(bin.length)); })
             .attr("y", function (bin) { 
-                return binPosScale(bin.x0) - binWidth; })
-            .attr("x", function (bin) { 
-                return 0*binHeightScale(bin.length); })
+                // this is necessary to ensure even spacing
+                return binWidth * Math.floor(binPosScale(bin.x0)/binWidthRaw) - binWidth; })
+            .attr("x", 0)
             .on("mouseover", function (bin) { 
                 d3.select(this).attr("fill", lightenColor(adp.paramColors[field], 1));
                 bin['units'] = adp.paramUnitsAbbr[field]; 
@@ -711,13 +714,13 @@ function makeHistogram(rideDetailData) {
     histBinsHeight = histBinsBrush.map( function(bin) { return bin.length; });
     maxBarIndex = histBinsHeight.indexOf(d3.max(histBinsHeight));
 
-    maxBarPos = binPosScale((histBinsBrush[maxBarIndex].x1 + histBinsBrush[maxBarIndex].x0)/2);
+    maxBarPos = binWidth * Math.floor(binPosScale(histBinsBrush[maxBarIndex].x0)/binWidthRaw)-binWidth;
 
     svg.select(".hist-max-label")
-           .attr("transform", "translate(" + (horizontalRange-5) + ',' + (maxBarPos - binWidth) + ")")
-           .attr("text-anchor", "middle")
+           .attr("transform", "translate(" + (horizontalRange + 2) + ',' + maxBarPos + ")")
+           .attr("text-anchor", "bottom")
            .attr("style", "font-size: 9px;")
-           .text(formatTimeTicks(d3.max(histBinsHeight)*dt));
+           .text(Math.floor(histBinsHeight[maxBarIndex]*dt/60.) + "m");
 
     svg.select("#bin-position-axis").selectAll("text").attr("visibility", "hidden");
 
@@ -863,7 +866,7 @@ function formatTimeTicks(sec) {
 
     var histogramProps = {
       padL: 10, 
-      padR: 15,
+      padR: 25,
       padT: 15, 
       padB:  10,
       width: 500, relWidth: 1,
@@ -944,6 +947,12 @@ function createActivityDetailControls(div) {
 
 function processRideDetailData(rideDetailData) {
 
+  var rideDetailData_ = [];
+
+  // hard-coded subsample rate (not strictly by timestamp but by row)
+  var SUBSAMPLE_RATE = 1;
+
+
   rideDetailData.forEach(function (row, index) {
 
     row.dst = row.dst / 1609;  // distance in miles
@@ -957,11 +966,6 @@ function processRideDetailData(rideDetailData) {
     row.lon = +row.lon;
 
   });
-
-  var rideDetailData_ = [];
-
-  // hard-coded subsample rate (not strictly by timestamp but by row)
-  var SUBSAMPLE_RATE = 5;
 
   for (i = 0; i < rideDetailData.length; i = i + SUBSAMPLE_RATE) {
     rideDetailData_.push(rideDetailData[i]);

@@ -63,10 +63,6 @@ ActivityList.prototype.update = function() {
 
 function displayActivityStats(currentActivityInfo) {
 
-  // the argument, if present, is assumed to be activityInfo corresponding to the brushed region in the detail plot
-  // if there's no argument, use the current global activity info
-  // if (!arguments.length) var currentActivityInfo = DB.currentActivityInfo;
-
   var params = loadProps().rideParametersByKey;
 
   d3.select("#div-activity-info").select("table").remove();

@@ -129,7 +129,7 @@ function smoothRide(rideData, windowSize) {
     var key = keys[ind];
 
     // don't smooth the time, obviously
-    if (key=='sec') { 
+    if (key==='sec') { 
       rideDataMA[key] = rideData[key].slice(0, numPoints - windowSize - 1);
       continue; 
     }

@@ -99,7 +99,7 @@ function makeMosaic() {
     
     svg.selectAll("rect")
        .style("opacity", 0)
-       .filter(function(rideDataRow) { return rideDataRow.activity_id==DB.currentActivityInfo.activity_id; })
+       .filter(function(rideDataRow) { return rideDataRow.activity_id===DB.currentActivityInfo.activity_id; })
        .style("opacity", .7);
 
     svg.selectAll("g")
@@ -124,7 +124,7 @@ function makeMosaic() {
 
     pathColor = "#666";
 
-    var ridePoints  = previewData.filter(function (d) { return d.id==rideDatum.activity_id; })
+    var ridePoints  = previewData.filter(function (d) { return d.id===rideDatum.activity_id; })
                                  .map(function (d) { return [+d.lon, +d.lat]; });
 
     var cen = [ d3.mean(ridePoints, function(d) { return d[0]; }), 
@@ -146,8 +146,8 @@ function makeMosaic() {
     // projection - fitExtent auto's the domain to the area spanned by coords in ridePoints
     var projection = d3.geoMercator();
 
-    if (scaleType=="relative") projection.fitExtent([[pad,pad], [width-2*pad, width-2*pad]], ridePoints);
-    if (scaleType=="absolute") projection.center(cen).scale(10000).translate([ width/2, width/2 ]);
+    if (scaleType==="relative") projection.fitExtent([[pad,pad], [width-2*pad, width-2*pad]], ridePoints);
+    if (scaleType==="absolute") projection.center(cen).scale(10000).translate([ width/2, width/2 ]);
 
     var path = d3.geoPath().projection(projection);
 
@@ -182,7 +182,7 @@ function makeMosaic() {
 
     var pathColor   = cellColor(rideDatum[parameterForColor]);
 
-    var ridePoints  = previewData.filter(function (d) { return d.id==rideDatum.activity_id; })
+    var ridePoints  = previewData.filter(function (d) { return d.id===rideDatum.activity_id; })
                                  .map(function (d) { return [+d.lon, +d.lat]; });
 
     var cen = [d3.mean(ridePoints, function(d) { return d[0]; }), d3.mean(ridePoints, function(d) { return d[1]; })];

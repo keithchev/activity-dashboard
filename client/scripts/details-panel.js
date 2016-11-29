@@ -19,7 +19,7 @@ function drawActivityDetail() {
 
   // check to see if the current activity has switched
   // if it hasn't (if this is just a window resize call, for example), do not run processRideDetailData
-  if (DB.rideDetailDataActivityID==DB.currentActivityInfo.activity_id) {
+  if (DB.rideDetailDataActivityID===DB.currentActivityInfo.activity_id) {
       makeRideDetailPlots(DB.rideDetailData);
 
   // load the data from the postgres database
@@ -123,7 +123,7 @@ function parsePseudoCode(pseudoCode) {
     fields = entry.split(/\W/);
 
     // if this is a simple field
-    if (fields.length==1) {
+    if (fields.length===1) {
       // and it matches a primitive field
       if (fields[0].match(primitives)!= null) {
         fieldData.push( {field: fields[0], func: function(d) { return d[fields[0]]; } });
@@ -150,7 +150,7 @@ function makeAltPlot(rideDetailData, xParam) {
   var ldp = loadActivityProps(),
       lpp = loadActivityProps().linePlotProps;
 
-  var svg, svgG, xParam = getXParam(), targetDiv, XScale;
+  var svg, svgG, xParam = getXParam(), targetDiv, xScale;
   var xParam = getXParam();
 
   lpp.padB = 20;
@@ -197,40 +197,40 @@ function makeAltPlot(rideDetailData, xParam) {
 
   altPlot.update = function() {
 
-    XScale = d3.scaleLinear()
+    xScale = d3.scaleLinear()
                    .range( [0, +svg.attr("width") - lpp.padL - lpp.padR])
                    .domain([0, rideDetailData.last()[xParam]]);
 
-    var XAxis = { sec: 
-                    d3.axisBottom(XScale)
-                      .tickValues(d3.range(0, XScale.domain()[1], 1200)) // every 20 min
+    var xAxis = { sec: 
+                    d3.axisBottom(xScale)
+                      .tickValues(d3.range(0, xScale.domain()[1], 1200)) // every 20 min
                       .tickFormat(formatTimeTicks)
                       .tickSize(0,0), 
                   dst:
-                    d3.axisBottom(XScale)
-                      .tickValues(d3.range(0, XScale.domain()[1], 5)) // every 5 miles
+                    d3.axisBottom(xScale)
+                      .tickValues(d3.range(0, xScale.domain()[1], 5)) // every 5 miles
                       .tickSize(0,0)
                 };       
 
 
-    svgG.select("#alt-plot-x-axis").call(XAxis[xParam]);
+    svgG.select("#alt-plot-x-axis").call(xAxis[xParam]);
 
     svgG.select("#alt-plot-y-axis").selectAll("path").attr("visibility", "hidden");
 
-    var YScaleAlt = d3.scaleLinear()
+    var yScaleAlt = d3.scaleLinear()
                       .range([lpp.height, 0])
                       .domain([ d3.min(rideDetailData, function(d) { return d.alt; }),
                                 d3.max(rideDetailData, function(d) { return d.alt; }) ]);
 
     var areaAlt = d3.area()
-                    .x(  function(d) { return XScale(d[xParam]); })
-                    .y1( function(d) { return YScaleAlt(d.alt); })
+                    .x(  function(d) { return xScale(d[xParam]); })
+                    .y1( function(d) { return yScaleAlt(d.alt); })
                     .y0( lpp.height );
 
-    var YAxisAlt  = d3.axisLeft(YScaleAlt)
+    var yAxisAlt  = d3.axisLeft(yScaleAlt)
                       .ticks(3).tickFormat( lpp.tickFormat['alt'] ).tickSize(-lpp.width + lpp.padL, 0);
 
-    svgG.select("#alt-plot-y-axis").call(YAxisAlt);
+    svgG.select("#alt-plot-y-axis").call(yAxisAlt);
 
     var brush = d3.brushX()
                   .extent([[0,0], [lpp.width, lpp.height]])
@@ -247,7 +247,7 @@ function makeAltPlot(rideDetailData, xParam) {
     function brushed() {
 
       var brushRange = d3.event.selection, // this would also work: d3.brushSelection(this);
-          domain = (brushRange == null) ? XScale.domain() : brushRange.map(XScale.invert) ;
+          domain = (brushRange === null) ? xScale.domain() : brushRange.map(xScale.invert) ;
 
       // update the linePlots (which also updates DB.rideDetailBrushed)
       d3.selectAll(".param-plot").each(function (linePlot_) {
@@ -287,7 +287,7 @@ function makeLinePlot(rideDetailData) {
   var adp = loadActivityProps();
   var lpp = loadActivityProps().linePlotProps;
 
-  var svg, XScale, YScale, fieldIsPrimitive, plotColor;
+  var svg, xScale, yScale, fieldIsPrimitive, plotColor;
 
   function linePlot() {};
 
@@ -349,7 +349,7 @@ function makeLinePlot(rideDetailData) {
     svg.append("defs").append("clipPath")
            .attr("id", "clip")
            .append("rect")
-           .attr("width", svg.attr("width") - lpp.padB - lpp.padT)
+           .attr("width", svg.attr("width") - lpp.padL - lpp.padR)
            .attr("height", lpp.height);
 
     // plot label
@@ -423,11 +423,11 @@ function makeLinePlot(rideDetailData) {
     // for now, scales and axes are defined from scratch here
     // (though subject to closure so mousemove can access them)
 
-    var XScale = d3.scaleLinear().range([0, +svg.attr("width") - lpp.padL - lpp.padR]);
-    var YScale = d3.scaleLinear().range([ lpp.height - lpp.padT - lpp.padB, 0 ]);
+    var xScale = d3.scaleLinear().range([0, +svg.attr("width") - lpp.padL - lpp.padR]);
+    var yScale = d3.scaleLinear().range([ lpp.height - lpp.padT - lpp.padB, 0 ]);
 
     var meanLine  = d3.line().x(function(d) { return d.x; }).y(function(d) { return d.y; });
-    var paramLine = d3.line().x(function(d) { return XScale(d[xParam]); }).y(function(d) { return YScale(d[field]); });
+    var paramLine = d3.line().x(function(d) { return xScale(d[xParam]); }).y(function(d) { return yScale(d[field]); });
 
 
     if (resetXAxis || !XDomain.length) XDomain = [0, rideDetailData_.last()[xParam]];
@@ -436,12 +436,12 @@ function makeLinePlot(rideDetailData) {
 
     XDomain = (XDomain[1] - XDomain[0]) > (rideDetailData_[1][xParam] - rideDetailData_[0][xParam]) ? XDomain : [0, rideDetailData_.last()[xParam]];
 
-    XScale.domain(XDomain);
+    xScale.domain(XDomain);
 
     if (Object.keys(adp.paramDomains).includes(field)) {
-      YScale.domain(adp.paramDomains[field]);
+      yScale.domain(adp.paramDomains[field]);
     } else {
-      YScale.domain([ d3.min(rideDetailData_, function(d){return d[field]; }), 
+      yScale.domain([ d3.min(rideDetailData_, function(d){return d[field]; }), 
                       d3.max(rideDetailData_, function(d){return d[field]; }) ]);
     }
 
@@ -450,18 +450,18 @@ function makeLinePlot(rideDetailData) {
 
     var meanSelection = d3.mean(DB.rideDetailDataBrushed, function(d) { return d[field]; });
       
-    var meanLineData = [ { "x": XScale.range()[0], "y": YScale(meanSelection) },
-                         { "x": XScale.range()[1], "y": YScale(meanSelection) } ];
+    var meanLineData = [ { "x": xScale.range()[0], "y": yScale(meanSelection) },
+                         { "x": xScale.range()[1], "y": yScale(meanSelection) } ];
 
-    // this has to be called *after* domains of XScale and YScale have been updated
-    var YAxis = d3.axisLeft(YScale);
-    var XAxis = d3.axisBottom(XScale);
+    // this has to be called *after* domains of xScale and yScale have been updated
+    var yAxis = d3.axisLeft(yScale);
+    var xAxis = d3.axisBottom(xScale);
 
-    YAxis.tickValues(YScale.domain().concat(meanSelection))
+    yAxis.tickValues(yScale.domain().concat(meanSelection))
          .tickFormat(lpp.tickFormat[field])
          .tickSize(0,0);
 
-    svg.select("#y-axis").call(YAxis);
+    svg.select("#y-axis").call(yAxis);
     
     svg.select("#data-path").attr("d", function(d) { return paramLine(rideDetailData_); });
     svg.select("#mean-path").attr("d", function(d) { return meanLine(meanLineData); });
@@ -489,15 +489,15 @@ function makeLinePlot(rideDetailData) {
 
       var dists = [];
       for (i = 0; i < rideDetailData_.length; i++) {
-        dists.push( Math.abs(mouseXPos - XScale(rideDetailData_[i][xParam])) );
+        dists.push( Math.abs(mouseXPos - xScale(rideDetailData_[i][xParam])) );
       }
 
       var mousePositionIndex = dists.indexOf(Math.min.apply(Math, dists));
 
       var mouseLine = d3.line().x(function(d) { return d.x; }).y(function(d) { return d.y; });
       
-      var lineData = [ { "x": XScale(rideDetailData_[mousePositionIndex][xParam]), "y": lpp.height  },
-                       { "x": XScale(rideDetailData_[mousePositionIndex][xParam]), "y": 0 } ];
+      var lineData = [ { "x": xScale(rideDetailData_[mousePositionIndex][xParam]), "y": lpp.height  },
+                       { "x": xScale(rideDetailData_[mousePositionIndex][xParam]), "y": 0 } ];
 
       d3.selectAll(".mouse-position-path").attr("d", mouseLine(lineData)).attr("visibility", "visible");
 
@@ -853,26 +853,26 @@ function formatTimeTicks(sec) {
 
     var linePlotProps = {
       padL: 30, 
-      padR: 5,
+      padR: 0,
       padT: 25, 
       padB:  10,
       width: 500, relWidth: 1,
       height: 120,
 
-      XAxisTimeFlag: 0,
+      xAxisTimeFlag: 0,
       doSmoothingFlag: 0,
       tickFormat: tickFormat,
     };
 
     var histogramProps = {
-      padL: 10, 
+      padL: 5, 
       padR: 25,
       padT: 15, 
       padB:  10,
       width: 500, relWidth: 1,
       height: 120,
       
-      XAxisTimeFlag: 0,
+      xAxisTimeFlag: 0,
       doSmoothingFlag: 0,
       tickFormat: tickFormat,
     };

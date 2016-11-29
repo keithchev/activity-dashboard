@@ -177,40 +177,40 @@
     // look for the current activity in the current date range and return true if we find it
     
     return !!DB.currentDateRangeInfo.rideData.filter(function(rideDatum) { 
-                return rideDatum.activity_id==DB.currentActivityInfo.activity_id; }).length;
+                return rideDatum.activity_id===DB.currentActivityInfo.activity_id; }).length;
 
   }
 
 
   function loadRightPanel() {
 
-    if (DB.rightPanelContent=="detail") {
+    if (DB.rightPanelContent==="detail") {
       drawActivityDetail();
     } 
-    if (DB.rightPanelContent=="history") {
+    if (DB.rightPanelContent==="history") {
       DB.historyPlot = new HistoryPlot(d3.select("#div-main-container"));
       DB.historyPlot.load();
     }
-    if (DB.rightPanelContent=="mosaic") {
+    if (DB.rightPanelContent==="mosaic") {
       DB.mosaic = makeMosaic().draw().sort().update();
     }
-    if (DB.rightPanelContent=="segments") {
-      DB.segments = makeSegments();
+    if (DB.rightPanelContent==="segments") {
+      makeSegments();
     }
   }
 
   function updateRightPanel() {
 
-    if (DB.rightPanelContent=="detail") {
+    if (DB.rightPanelContent==="detail") {
       drawActivityDetail();
     } 
-    if (DB.rightPanelContent=="history") {
+    if (DB.rightPanelContent==="history") {
       DB.historyPlot.update();
     }
-    if (DB.rightPanelContent=="mosaic") {
+    if (DB.rightPanelContent==="mosaic") {
       DB.mosaic.update();
     }
-    if (DB.rightPanelContent=="segments") {
+    if (DB.rightPanelContent==="segments") {
       
     }
   }
@@ -279,10 +279,10 @@
       .on("click", handleRightPanelButtonClick);
 
 
-    d3.select("#view-history").attr("class", DB.rightPanelContent=="history" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-detail").attr("class", DB.rightPanelContent=="detail" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-mosaic").attr("class", DB.rightPanelContent=="mosaic" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-segments").attr("class", DB.rightPanelContent=="segments" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
+    d3.select("#view-history").attr("class", DB.rightPanelContent==="history" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
+    d3.select("#view-detail").attr("class", DB.rightPanelContent==="detail" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
+    d3.select("#view-mosaic").attr("class", DB.rightPanelContent==="mosaic" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
+    d3.select("#view-segments").attr("class", DB.rightPanelContent==="segments" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
     
     }
 
@@ -292,23 +292,23 @@
 
     DB.rightPanelContent = "";
 
-    if (id=="view-history") {
+    if (id==="view-history") {
       DB.rightPanelContent = "history";
     }
-    if (id=="view-detail") {
+    if (id==="view-detail") {
       DB.rightPanelContent = "detail";
     }
-    if (id=="view-mosaic") {
+    if (id==="view-mosaic") {
       DB.rightPanelContent = "mosaic";
     }
-    if (id=="view-segments") {
+    if (id==="view-segments") {
       DB.rightPanelContent = "segments";
     }
 
-    d3.select("#view-history").attr("class", DB.rightPanelContent=="history" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-detail").attr("class", DB.rightPanelContent=="detail" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-mosaic").attr("class", DB.rightPanelContent=="mosaic" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-segments").attr("class", DB.rightPanelContent=="segments" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
+    d3.select("#view-history").attr("class", DB.rightPanelContent==="history" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
+    d3.select("#view-detail").attr("class", DB.rightPanelContent==="detail" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
+    d3.select("#view-mosaic").attr("class", DB.rightPanelContent==="mosaic" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
+    d3.select("#view-segments").attr("class", DB.rightPanelContent==="segments" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
     
     loadRightPanel(DB.currentActivityInfo); 
 
@@ -384,6 +384,14 @@
     }
     return uniqueElements;
 }
+
+  // ** copied from MBTA viz **
+  // add utility to move an SVG selection to the front
+  d3.selection.prototype.moveToFront = function () {
+    return this.each(function () {
+      this.parentNode.appendChild(this);
+    });
+  };
 
 
   function listOfDictsToDictOfLists(list) {
@@ -585,64 +593,239 @@
     d3.selectAll("#div-main-container div").remove();
     d3.selectAll("#div-main-container svg").remove();
     
-    //createSegmentControls(div);
-
     div.append("div").attr("class", "").attr("id", "segments-plot-container");
+
+    // can add more of these divs to display multiple segments (one per row)
+    div.append("div").attr("class", "segment-plot");
+
+    // select element to choose which segment to display
+    //createSegmentControls(div);
 
     var q = d3.queue();
 
     var segmentsDir = "./data/segments/";
-    var segmentsList = ["tunnel", "claremont", "south_park_drive",];
+    var segmentsList = [{name: "Tunnel Road", filename: "tunnel"}, 
+                        {name: "Claremont Avenue", filename: "claremont"}, 
+                        {name: "South Park Drive", filename: "south_park_drive"} ];
 
-    segmentsList.map( function(seg) { q.defer(d3.csv, segmentsDir + seg + "_list.csv"); });
+    // default current segment - this can be changed by "select-segment" selectbox
+    DB.currentSegment = "south_park_drive";
+
+    //DB.currentSegment = "claremont";
+
+    // queue all of the segment attempt CSV files
+    segmentsList.map( function(seg) { q.defer(d3.csv, segmentsDir + seg.filename + "_list.csv"); });
 
     q.awaitAll( function(err, data) {
 
-      // segmentsList, segmentsDir appear not to be defined here - not sure why
-      debugger;
-      makeSegmentPlots(segmentsList, data);
+      // for now, just plot the current segment in the only .segment-plot div
+      DB.segmentPlot = makeSegmentPlot(d3.select(".segment-plot"));
 
+      // index of the default segment to display (this will be called on select box change)
+      var ind = segmentsList.map(function(d){return d.filename;}).indexOf(DB.currentSegment);
 
-      // list of segment ids (unique() method defined above)
-      segIDs = data[0].map(function(d) { return d.segID; }).unique();
+      // make the plot of the current segment
+      // *NOTE*: all preprocessing etc of the CSV data occurs in .segData() 
+      DB.segmentPlot.segData(data[ind])
+                    .segName(segmentsList[ind])
+                    .init();
 
-      // list of segment data lists
-      segData = uniqueIDs.map(function(id) { return data[0].filter(function(d) { return d.segID==id; }); });
-
-      // list of corresponding activity ids
-      actIDs = segData.map(function(d) { return d[0].id; }); 
 
     });
   }
 
 
 
-  function makeSegmentPlots(segmentsList, data) {
+  function makeSegmentPlot(targetDiv) {
 
-    var div = d3.select("segments-plot-container");
+    var currentAttempt, segData, segDataSplit, segDataProps, segName, segIDs, actIDs;
 
-    // do we want a menu to switch between segments? or to display all segments at
+    var svg, svgG, xScale, yScale;
 
-    segmentPlots = div.selectAll(".segment-plot")
-                      .data(data).enter()
-                      .append("div")
-                      .attr("class", ".segment-plot");
+    var height = 500; 
+    var width = parseInt(targetDiv.style("width"));
 
-    // list of all tries
-    segmentPlots.selectAll(".segment-attempt-list");
+    var padT = 15, padB = 30, padL = 30, padR = 15;
 
-    // line plots of one param against distance
-    segmentPlots.selectAll(".segment-line-plot");
+    //default parameter to plot
+    var param = "pwr";
 
-    // scatter plots of mean params 
-    segmentPlots.selectAll(".segment-scatter-plot");
+    function segmentPlot() {}
+
+    segmentPlot.segData = function(_){
+      if (!arguments.length) return segData;
+
+      segData = _;
+
+      segData.forEach(function (row, index) {
+
+        row.dst = row.dst / 1609;  // distance in miles
+        row.alt = row.alt * 3.28;  // elevation in feet
+
+        row.cad = +row.cad; // cadence in RPM
+        row.pwr = +row.pwr; // power in watts
+        row.hrt = +row.hrt; // heart rate in bpm
+        row.sec = +row.sec; // elapsed time in seconds
+        row.lat = +row.lat;
+        row.lon = +row.lon;
+
+      });
+
+      // list of attempt ids (unique() method defined above)
+      segIDs = segData.map(function(d) { return d.segID; }).unique();
+
+      // split segData into list of lists by segment attempt ID
+      segDataSplit = segIDs.map(function(id) { return segData.filter(function(d) { return d.segID===id; }); });
+
+      // list of each attempt's activity id
+      actIDs = segDataSplit.map(function(d) { return d[0].id; }); 
+
+      // initial processing - set each attempt's .dst and .sec fields to zero
+      segDataSplit = processSegData(segDataSplit);
+
+      return segmentPlot;
+    }
+
+    segmentPlot.segName = function(_){
+      if (!arguments.length) return segName;
+      segName = _;
+      return segmentPlot;
+    }
+
+    segmentPlot.param = function(_) {
+      if (!arguments.length) return param;
+      param = _;
+      return segmentPlot;
+    }
 
 
+    segmentPlot.init = function () {
+
+      targetDiv.select("svg").remove();
+
+      svg  = targetDiv.append("svg").attr("width", width).attr("height", height + padT + padB);
+      svgG = svg.append("g").attr("transform", "translate(" + padL + "," + padT + ")");
+
+      svgG.append("g").attr("class", "axis").attr("id", "seg-y-axis-1");
+      svgG.append("g").attr("class", "axis").attr("id", "seg-y-axis-2");
+      svgG.append("g").attr("class", "axis").attr("id", "seg-x-axis")
+          .attr("transform", "translate(0," + (height - padT - padB) + ")");
+
+      // append a path for each segment attempt 
+      for (var ii = 0; ii < segIDs.length; ii++) {
+        svgG.append("path").attr("class", "seg-line-plot-path")
+                           .attr("id", "seg_" + segIDs[ii]);
+      }
+
+      // calc max attempt distance - these should all be very nearly equal,
+      // unless there is a bug in the segment identification code (in python)
+
+      segDataProps = [];
+
+      segDataSplit.map(function (seg) {
+
+        segDataProps.push({
+          totalDst: seg.last().dst - seg[0].dst,
+          totalSec: seg.last().sec - seg[0].sec,
+          max: {
+            pwr: d3.max(seg, function(d) { return d.pwr; }),
+            hrt: d3.max(seg, function(d) { return d.hrt; }),
+            },
+          min: {
+            pwr: d3.min(seg, function(d) { return d.pwr; }),
+            hrt: d3.min(seg, function(d) { return d.hrt; }),
+            },
+          mean: {
+            pwr: d3.mean(seg, function(d) { return d.pwr; }),
+            hrt: d3.mean(seg, function(d) { return d.hrt; }),
+            },
+          });
+      });
+
+      var maxDst = d3.max(segDataProps, function(prop) { return prop.totalDst; });
+
+      param = 'pwr';
+
+      // x axis is distance
+      xScale = d3.scaleLinear().range([0, width - padL - padR])
+                 .domain([0, maxDst]);
+
+      yScale = d3.scaleLinear().range([height - padT - padB, 0])
+                 .domain([d3.min(segDataProps, function(prop) { return prop.min[param]; }),
+                          d3.max(segDataProps, function(prop) { return prop.max[param]; }) ]);
+
+
+       svgG.select("#seg-y-axis").call(d3.axisLeft(yScale).tickSize(0,0));
+       svgG.select("#seg-x-axis").call(d3.axisBottom(xScale).tickSize(0,0));
+
+      var attemptLine;
+
+      for (var ii = 0; ii < segIDs.length; ii++) {
+        attemptLine = d3.line().x(function(d) { return xScale(d.dst); })
+                               .y(function(d) { return yScale(d[param]); });
+
+        svgG.select("#seg_" + segIDs[ii])
+        .attr("d", function(d) { return attemptLine(segDataSplit[ii]); })
+        .on("mouseover", function() {d3.select(this).style("stroke", "red").style("opacity", 1).moveToFront(); })
+        .on("mouseout", function() {d3.select(this).style("stroke", "#333").style("opacity", .3); });
+      }
+
+
+
+      // // list of all tries
+      // segmentPlots.selectAll(".segment-attempt-list");
+
+      // // line plots of one param against distance
+      // segmentPlots.selectAll(".segment-line-plot");
+
+      // // scatter plots of mean params 
+      // segmentPlots.selectAll(".segment-scatter-plot");
+
+    }
+
+
+
+
+    return segmentPlot;
+  } // makeSegmentPlot
+
+
+
+  function processSegData(segData) {
+
+    // shift sec and dst in each segment attempt so that they start at zero
+    // segData is a list of raw segment attempt data lists
+
+    var seg_;
+
+    var SUBSAMPLE_RATE = 1;
+
+    segData = segData.map(function (seg) {
+
+      seg = smoothRide(seg, SUBSAMPLE_RATE);
+
+      seg_ = [];
+
+      for (var i = 0; i < seg.length; i = i + SUBSAMPLE_RATE) {
+        seg_.push(seg[i]);
+      }
+
+      seg = seg_;
+
+      var initDst = seg[0].dst;
+      var initSec = seg[0].sec;
+
+      seg = seg.map( function(row) { 
+        row.dst = row.dst - initDst; 
+        row.sec = row.sec - initSec;
+        return row;
+      });
+
+      return seg;
+    });
+
+    return segData;
   }
-
-
-
-
 
 
   </script>

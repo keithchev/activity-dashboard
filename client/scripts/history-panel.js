@@ -87,7 +87,7 @@ HistoryPlot.prototype.draw = function () {
       plotPad  = this.plotPad,
       svg = this.svg;
 
-  var XScale, XAxis, XGrid, YAxisLeft, YAxisRight, YScaleParam, YScaleConv, lineConv;
+  var xScale, xAxis, xGrid, yAxisLeft, yAxisRight, yScaleParam, yScaleConv, lineConv;
 
   var date_i = d3.timeDay.offset(d3.min(this.rideDict.timestamp), 0),
       date_f = d3.timeDay.offset(d3.max(this.rideDict.timestamp), 0);
@@ -101,52 +101,52 @@ HistoryPlot.prototype.draw = function () {
                 );
   }
 
-  XScale = d3.scaleTime().range([plotPad.w, plotSize.w - plotPad.w]).domain([date_i, date_f]);
+  xScale = d3.scaleTime().range([plotPad.w, plotSize.w - plotPad.w]).domain([date_i, date_f]);
 
-  XAxis = d3.axisBottom(XScale).ticks(d3.timeMonth.every(1)).tickFormat("").tickSize(0,0,0);
+  xAxis = d3.axisBottom(xScale).ticks(d3.timeMonth.every(1)).tickFormat("").tickSize(0,0,0);
 
-  XGrid = d3.axisBottom(XScale)
+  xGrid = d3.axisBottom(xScale)
             .ticks(d3.timeMonth.every(1))
             .tickFormat(d3.timeFormat("%b %y"))
             .tickSize(-(plotSize.h - 2*plotPad.h),0,0);
 
-  YScaleParam = d3.scaleLinear()
+  yScaleParam = d3.scaleLinear()
                   .range([ plotSize.h - plotPad.h, plotPad.h ])
                   .domain(params[historyPlotParameter].range);
 
-  YScaleConv = d3.scaleLinear()
+  yScaleConv = d3.scaleLinear()
                  .range([ plotSize.h - plotPad.h, plotPad.h ])
                  .domain(params[historyPlotParameter].range); 
 
   lineConv = d3.line()
-               .x(function(d) {return XScale(d.days); })
-               .y(function(d) {return YScaleConv(d.conv/d.count); })
+               .x(function(d) {return xScale(d.days); })
+               .y(function(d) {return yScaleConv(d.conv/d.count); })
                .curve(d3.curveLinear);
 
   this.svg.select("#history-y-axis-right").attr("visibility", "hidden");
 
   if (!historyPlotMeanOrSum) {
     convData = convData.map(function(d){ d.count = 1; return d; });
-    YScaleConv.domain([ YScaleParam.domain()[0], d3.max(convData, function(d) { return d.conv/d.count; }) ]);
+    yScaleConv.domain([ yScaleParam.domain()[0], d3.max(convData, function(d) { return d.conv/d.count; }) ]);
     this.svg.select("#history-y-axis-right").attr("visibility", "visible");
   } 
 
   var tickStep = params[historyPlotParameter].step;
 
-  YAxisLeft = d3.axisLeft(YScaleParam)
-                .tickValues(d3.range(tickStep, YScaleParam.domain()[1], tickStep))
+  yAxisLeft = d3.axisLeft(yScaleParam)
+                .tickValues(d3.range(tickStep, yScaleParam.domain()[1], tickStep))
                 .tickSize((-plotSize.w + plotPad.w)*0, 0, 0);
 
-  YAxisRight = d3.axisRight(YScaleConv).tickSize(0,0,0).ticks(4);
+  yAxisRight = d3.axisRight(yScaleConv).tickSize(0,0,0).ticks(4);
 
-  if (historyPlotParameter == 'total_time_sec') {
-    YAxisLeft.tickFormat( function (sec) { return Math.floor(sec/3600) + "h"; });
-    YAxisRight.tickFormat( function (sec) { return Math.floor(sec/3600) + "h"; });
+  if (historyPlotParameter === 'total_time_sec') {
+    yAxisLeft.tickFormat( function (sec) { return Math.floor(sec/3600) + "h"; });
+    yAxisRight.tickFormat( function (sec) { return Math.floor(sec/3600) + "h"; });
   }
 
-  svg.select("#history-x-axis").call(XGrid);
-  svg.select("#history-y-axis-left").transition().duration(500).call(YAxisLeft);
-  svg.select("#history-y-axis-right").transition().duration(500).call(YAxisRight);
+  svg.select("#history-x-axis").call(xGrid);
+  svg.select("#history-y-axis-left").transition().duration(500).call(yAxisLeft);
+  svg.select("#history-y-axis-right").transition().duration(500).call(yAxisRight);
 
   svg.select("#conv-path").transition().duration(500).attr("d", function(d) { return lineConv(convData); });
 
@@ -155,8 +155,8 @@ HistoryPlot.prototype.draw = function () {
     .enter().append("circle")
     .attr("class", "history-dot")
     .attr("r", 5)
-    .attr("cx", function(d) { return XScale(d.timestamp); })
-    .attr("cy", function(d) { return YScaleParam(d[historyPlotParameter]); })
+    .attr("cx", function(d) { return xScale(d.timestamp); })
+    .attr("cy", function(d) { return yScaleParam(d[historyPlotParameter]); })
     .style("fill", function(d) { return "#0066ff"; })
     .style("opacity", .7)
     .on("mouseover", function() { 
@@ -167,18 +167,18 @@ HistoryPlot.prototype.draw = function () {
       changeActivity(rideDataRow); });
 
   svg.selectAll(".history-dot").transition().duration(500)
-  .attr("cy", function(d) { return YScaleParam(d[historyPlotParameter]); });
+  .attr("cy", function(d) { return yScaleParam(d[historyPlotParameter]); });
 
   // remove the first y axis tick 
   d3.selectAll("#history-y-axis-left g").each( function() { 
-    if (d3.select(this).select("text").text()=="0") { 
+    if (d3.select(this).select("text").text()==="0") { 
       d3.select(this).attr("visibility", "hidden"); 
     } 
   });
 
   // remove the first y axis tick 
   d3.selectAll("#history-y-axis-right g").each( function() { 
-    if (d3.select(this).select("text").text()=="0") { 
+    if (d3.select(this).select("text").text()==="0") { 
       d3.select(this).attr("visibility", "hidden"); 
     }
   });
@@ -190,7 +190,7 @@ HistoryPlot.prototype.update = function() {
     this.svg.selectAll(".history-dot")
         .style("fill", "#0066ff")
         .style("opacity", .7)
-        .filter(function (d) { return d.activity_id == DB.currentActivityInfo.activity_id; })
+        .filter(function (d) { return d.activity_id === DB.currentActivityInfo.activity_id; })
         .style("fill", "orange").style("opacity", 1);
     
 }
@@ -251,8 +251,8 @@ function calcConvolution(convType, windowSize, param) {
 
   var rideData = DB.rideData.copy();
 
-  if (convType == 'Window') { calcConvWeight = convWeightWindow; }
-  if (convType == 'Exponential') {calcConvWeight = convWeightExp; }
+  if (convType === 'Window') { calcConvWeight = convWeightWindow; }
+  if (convType === 'Exponential') {calcConvWeight = convWeightExp; }
 
   var windowSizeInDays = Math.ceil(windowSize / (3600000 * 24));
 

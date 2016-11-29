@@ -53,7 +53,7 @@ ActivityList.prototype.update = function() {
   // highlight selected activity
   // this should be the first activity in the list if a new date range was selected 
   // which is determined by update functions for date range click events
-  tr.filter(function(d) { return d.activity_id==DB.currentActivityInfo.activity_id; })
+  tr.filter(function(d) { return d.activity_id===DB.currentActivityInfo.activity_id; })
     .attr("class", "activity-list-row selected");
 
   return this;

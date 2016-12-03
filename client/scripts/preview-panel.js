@@ -102,7 +102,7 @@ function displayActivityStats(currentActivityInfo) {
 function initMap() {
 
     var lineOptions = {
-    color: 'red',
+    color: "red",
     weight: 3,
     opacity: 0.7
   };

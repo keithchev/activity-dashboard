@@ -694,9 +694,9 @@ function makeHistogram(rideDetailData) {
 
     histBars.enter().append("rect")
             .attr("class", "bar")
-            .attr("stroke", adp.paramColors[field])
-            .attr("fill", lightenColor(adp.paramColors[field], .5))
-            .attr("height", binWidth - 2)
+            .attr("stroke", "none")//adp.paramColors[field])
+            .attr("fill", lightenColor(adp.paramColors[field], 1))
+            .attr("height", binWidth - 1)
             .attr("width", function (bin) { 
                 return Math.floor(binHeightScale.range()[1] - binHeightScale(bin.length)); })
             .attr("y", function (bin) { 
@@ -704,11 +704,11 @@ function makeHistogram(rideDetailData) {
                 return binWidth * Math.floor(binPosScale(bin.x0)/binWidthRaw) - binWidth; })
             .attr("x", 0)
             .on("mouseover", function (bin) { 
-                d3.select(this).attr("fill", lightenColor(adp.paramColors[field], 1));
+                d3.select(this).attr("fill", lightenColor(adp.paramColors[field], .5));
                 bin['units'] = adp.paramUnitsAbbr[field]; 
                 binTip.show(bin); })
             .on("mouseout", function (bin) { 
-                d3.select(this).attr("fill", lightenColor(adp.paramColors[field], .5)); 
+                d3.select(this).attr("fill", lightenColor(adp.paramColors[field], 1)); 
                 binTip.hide(bin); });
 
     histBinsHeight = histBinsBrush.map( function(bin) { return bin.length; });
@@ -757,7 +757,9 @@ function formatTimeTicks(sec) {
     tickFormatFcn = function (tick, ndec) {
       return (Math.ceil(tick) - tick > 0) ? d3.format('.' + ndec + 'f')(tick) : d3.format('.0f')(tick);
     }
-    
+
+    var cat10Colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"];
+    // blue orange green red purple brown pink gray teal aqua
 
     var paramDomains = {
       spd: [0, 40], 
@@ -782,10 +784,10 @@ function formatTimeTicks(sec) {
 
     var paramColors = {
       alt: "rgb(0,0,0)",
-      spd: "rgb(30, 190, 30)",
-      pwr: "rgb(250, 80, 30)",
-      hrt: "rgb(30, 80, 200)",
-      cad: "rgb(220, 20, 190)",
+      spd: "#2ca02c", // green "#9467bd", //
+      pwr: "#9467bd", //
+      hrt: "#d62728", // red  "#1f77b4", // blue
+      cad: "#ee7f0e", // orange
       vam: "rgb(80, 80, 80)",
       slp: "rgb(30, 30, 30)",
       elg: "rgb(30, 30, 30)",

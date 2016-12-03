@@ -11,7 +11,7 @@
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon" />
 
   <!-- Bootstrap css -->
-  <link href="./styles/components/bootstrap/bootstrap.min.css" rel="stylesheet">
+  <link href="./components/bootstrap/bootstrap.min.css" rel="stylesheet">
 
   <!--  leaflet css -->
   <link rel="stylesheet" href="./components/leaflet/leaflet.css" />
@@ -69,10 +69,10 @@
   </div>   <!-- end row -->
 
 
-  <!-- less style sheets -->
-  <link rel="stylesheet/less" type="text/css" href="styles/main.less" />
+  <!-- custom styles -->
+  <link rel="stylesheet/less" type="text/css" href="styles/activity-dashboard.main.less" />
 
-  <!-- less.js options -->
+  <!-- less defaults -->
   <script>
     less = {
       env: "development",
@@ -103,14 +103,14 @@
 
   <script>
 
-  window.DB = {
+  DB = {
 
     rideData: [],
     rideDetailData: [],
     rideDetailDataActivityID: 0,
     currentActivityInfo: {},
     currentDateRangeInfo: {start_date: new Date,},
-    rightPanelContent: 'segments', // history, detail, or mosaic, or segments
+    rightPanelContent: 'detail', // history, detail, or mosaic, or segments
     dateToKey: d3.timeFormat("%Y-%m-%d"),
     keyToDate: d3.timeParse("%Y-%m-%d"),
 
@@ -326,7 +326,7 @@
 
   function processRideData() {
 
-    var CYCLIST_FTP_ESTIMATE = 275;
+    var CYCLIST_FTP = 275;
 
     DB.rideData.map( function(row) { 
 
@@ -337,7 +337,7 @@
       var total_time_as_date = d3.timeParse("%H:%M:%S")(row.total_time);
       row.total_time_sec = total_time_as_date.getHours()*60*60 + total_time_as_date.getMinutes()*60 + total_time_as_date.getSeconds();
 
-      row.intensity_factor      = row.normalized_power / CYCLIST_FTP_ESTIMATE;
+      row.intensity_factor      = row.normalized_power / CYCLIST_FTP;
       row.training_stress_score = 100 * (row.total_time_sec/3600.) * row.intensity_factor**2 ;
 
       row.total_calories = row.total_work * 1.1;
@@ -472,10 +472,10 @@
     // var fdate = function (dateString) { return d3.timeFormat("%B %d, %Y")(d3.timeParse("%Y-%m-%d")(dateString)); }
     var fdate = function (dateString) { return d3.timeFormat("%m/%d/%Y")(d3.timeParse("%Y-%m-%d")(dateString)); }
 
-    // the timestamps from FIT files are 7 hours ahead of PST, so this ugly hack changes the time to PST
+    // format time as 12-hour hh:mm:ss
     var ftime = function (timeString) { 
                 d = d3.timeParse("%H:%M:%S")(timeString);
-                return d3.timeFormat("%I:%M%p")(new Date(d.getTime() - 60000*60*7)); }
+                return d3.timeFormat("%I:%M%p")(new Date(d.getTime())); }
 
     var rideParameters = [
       {
@@ -599,7 +599,7 @@
     div.append("div").attr("class", "segment-plot");
 
     // select element to choose which segment to display
-    //createSegmentControls(div);
+    createSegmentControls(div);
 
     var q = d3.queue();
 
@@ -642,12 +642,14 @@
 
     var svg, svgG, xScale, yScale;
 
-    var height = 500; 
-    var width = parseInt(targetDiv.style("width"));
+    var heightSVG = 400;
+    var widthSVG = parseInt(targetDiv.style("width"));
 
     var padT = 15, padB = 30, padL = 30, padR = 15;
 
     //default parameter to plot
+    var params = ["pwr", "hrt"];
+
     var param = "pwr";
 
     function segmentPlot() {}
@@ -692,9 +694,9 @@
       return segmentPlot;
     }
 
-    segmentPlot.param = function(_) {
-      if (!arguments.length) return param;
-      param = _;
+    segmentPlot.params = function(_) {
+      if (!arguments.length) return params;
+      params = _;
       return segmentPlot;
     }
 
@@ -703,13 +705,17 @@
 
       targetDiv.select("svg").remove();
 
-      svg  = targetDiv.append("svg").attr("width", width).attr("height", height + padT + padB);
+      svg  = targetDiv.append("svg").attr("width", widthSVG).attr("height", heightSVG + padT + padB);
+
+
+
+
       svgG = svg.append("g").attr("transform", "translate(" + padL + "," + padT + ")");
 
       svgG.append("g").attr("class", "axis").attr("id", "seg-y-axis-1");
       svgG.append("g").attr("class", "axis").attr("id", "seg-y-axis-2");
       svgG.append("g").attr("class", "axis").attr("id", "seg-x-axis")
-          .attr("transform", "translate(0," + (height - padT - padB) + ")");
+          .attr("transform", "translate(0," + (heightSVG - padT - padB) + ")");
 
       // append a path for each segment attempt 
       for (var ii = 0; ii < segIDs.length; ii++) {
@@ -744,13 +750,10 @@
 
       var maxDst = d3.max(segDataProps, function(prop) { return prop.totalDst; });
 
-      param = 'pwr';
-
       // x axis is distance
-      xScale = d3.scaleLinear().range([0, width - padL - padR])
-                 .domain([0, maxDst]);
+      xScale = d3.scaleLinear().range([0, widthSVG - padL - padR]).domain([0, maxDst]);
 
-      yScale = d3.scaleLinear().range([height - padT - padB, 0])
+      yScale = d3.scaleLinear().range([heightSVG - padT - padB, 0])
                  .domain([d3.min(segDataProps, function(prop) { return prop.min[param]; }),
                           d3.max(segDataProps, function(prop) { return prop.max[param]; }) ]);
 
@@ -788,6 +791,11 @@
 
     return segmentPlot;
   } // makeSegmentPlot
+
+  function createSegmentControls(targetDiv) {
+
+
+  }
 
 
 

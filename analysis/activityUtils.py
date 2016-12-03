@@ -167,8 +167,11 @@ def calcActivityParamsFromCSV(arg):
 
     # by setting spurious power to nan, it will be ignored by .sum() and .mean()
     data.pwr[data.pwr > ABS_MAX_PWR] = float('nan')
-    
+        
     data.time = [datetime.strptime(t, '%Y-%m-%d %H:%M:%S') for t in data.time]
+    
+    # subtract 8 hours to get to PST (note: datetime object is somehow recast as pandas.tslib.Timestamp above)
+    data.time = data.time - np.timedelta64(8, 'h')
     
     dt = data.time[data.shape[0]-1] - data.time[0]
 
@@ -187,7 +190,7 @@ def calcActivityParamsFromCSV(arg):
     
     pwr = data.pwr.multiply(data.sec.diff())
     
-    params['total_work']       = pwr.sum()*dt/1000. # in kJ
+    params['total_work']       = pwr.sum()/1000. # in kJ
     params['average_power']    = pwr.mean()
     
     pwrMovingAv = calcPwrMovingAverage(data)
@@ -200,25 +203,29 @@ def calcActivityParamsFromCSV(arg):
 def addFieldsToMetadata(metadataFilename):
     
     # add calculated stats from each FIT-derived CSV file to the metadata file
+    # overwrites any existing fields! (exccluding activity ID)
     md = pd.read_csv(metadataFilename)
      
     for ind, row in md.iterrows():
         csvFilename = row['filename']
         print(csvFilename)
+        
         params = calcActivityParamsFromCSV(csvFilename)
         
         for key in params.keys():
             try:
                 md[key]
             except:
-                md[key] = 0
+                md[key] = float(0)
                 
             md[key][ind] = params[key]                
                 
     print((100*ind)/md.shape[0])
-        
-    writeActivityCSV(md, metadataFilename)
+       
+#    writeActivityCSV(md, metadataFilename)
 
+    return md
+        
 
 
 def calcMovingTime(data):

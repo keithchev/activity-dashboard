@@ -34,7 +34,7 @@ ActivityList.prototype.load = function(rideData) {
                 changeActivity(d); });
 
     // column definitions by binding a list of keys for rideData entries bound to tr    
-    td = tr.selectAll("td").data(this.columnParams).enter().append("td");
+    var td = tr.selectAll("td").data(this.columnParams).enter().append("td");
 
     // write the column entries using the row's data
     td.append("span").attr("class", "activity-list-item").text(function (key) { 

@@ -86,12 +86,17 @@
     };
   </script>
 
-  <!-- third-party components -->
+  <!-- components -->
   <script src="./components/less/less.min.js"></script>
+
   <script src="./components/d3.v4/d3.min.js"></script>
   <script src="./components/d3-tip/index.js"></script>
   <script src="./components/d3-scale-chromatic.v1.min.js"></script>
+  <script src="./components/d3-selection-multi.min.js"></script>
+
   <script src="./components/leaflet/leaflet.js"></script>
+  <script src="./components/crossfilter.v1.min.js"></script>
+  <script src="./components/underscore.min.js"></script>
 
   <!-- visualization code -->
   <script src="./scripts/calendar.js"></script>
@@ -373,17 +378,6 @@
       return this.slice(0);
   }
 
-  Array.prototype.unique = function() {
-    var elementsAsKeys = {},
-        uniqueElements = [];
-    for (var i = 0; i < this.length; ++i) {
-        if (!elementsAsKeys.hasOwnProperty(this[i])) {
-            uniqueElements.push(this[i]);
-            elementsAsKeys[this[i]] = 1; // arbitrary value
-        }
-    }
-    return uniqueElements;
-}
 
   // ** copied from MBTA viz **
   // add utility to move an SVG selection to the front
@@ -673,8 +667,8 @@
 
       });
 
-      // list of attempt ids (unique() method defined above)
-      segIDs = segData.map(function(d) { return d.segID; }).unique();
+      // list of attempt ids 
+      segIDs = _.unique(segData.map(function(d) { return d.segID; }));
 
       // split segData into list of lists by segment attempt ID
       segDataSplit = segIDs.map(function(id) { return segData.filter(function(d) { return d.segID===id; }); });

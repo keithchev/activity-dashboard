@@ -1,7 +1,7 @@
 @link-color: #4682b4;
 
-@orange: #ffd080;
-@light-orange: #ffe9c3;
+@orange: #ffe9c3; //#ffd080;
+@light-orange: #ffefd3;
 
 @border-color: #ccc;
 
@@ -9,7 +9,7 @@
 @button-color-hover: #f7f7f7;
 @button-color-selected: #ddd;
 
-@debug-border: 0px;
+@debug-border: 1px;
 
 .main-font {
   //font-family: "Open sans", sans-serif; 
@@ -51,8 +51,10 @@ rect { shape-rendering: crispEdges; }
   line-height: 1;
 }
 .header2 {
-  font-weight: bold;
+  font-weight: normal;
   font-size: 18px;
+  padding-top: 5px;
+  border-bottom: 1px solid @border-color;
 }
 
 #main-container {
@@ -83,7 +85,7 @@ select:focus, input:focus {
 .navbar-inverse .navbar-brand { 
   color: #ddd; 
   font-weight: bold; 
-  font-size: 24px;
+  font-size: 30px;
 }
 .navbar-inverse .navbar-nav > li > a { color: #ffd040; }
 
@@ -102,11 +104,14 @@ select:focus, input:focus {
 }
 
 #calendar-tabs-container {
-  padding-bottom: 10px;
+display: inline-block;
+  padding-bottom: 0px;
+  width: auto;
 }
 
 #calendar-controls-container {
-  padding-left: 10px;
+  padding-left: 0px;
+  padding-top: 12px;
 }
 
 .month-label {  font-size: 10px; }
@@ -161,7 +166,7 @@ select:focus, input:focus {
   margin: 2px;
   margin-bottom: 0px;
   text-align: left;
-  border-bottom: 1px solid @border-color;
+  border-bottom: 0px solid @border-color;
 }
 
 #activity-list-container td {
@@ -194,6 +199,8 @@ select:focus, input:focus {
   padding-top: 4px;
   padding-bottom: 4px; 
   line-height: 1; 
+  border: 0px;
+  border-bottom: 1px solid @border-color;
 }
 
 .activity-parameter-name {
@@ -229,7 +236,7 @@ select:focus, input:focus {
 
 #right-panel-tabs-container { 
   text-align: left; 
-  padding-top: 10px; 
+  padding-top: 0px; 
   padding-bottom: 0px; 
 }
 
@@ -266,8 +273,10 @@ select:focus, input:focus {
 // ------------------------------------------------------
 
 .form-control-history {
+  display: inline-block;
+  width: auto;
   height: auto; 
-  padding: 5px;  
+  padding: 0px;  
   padding-right: 0px;
   font-size: 12px;
   border: 0px;
@@ -276,17 +285,25 @@ select:focus, input:focus {
   background-color: #fff;
   }
 
-#history-select-conv-window { width: 30px; }
+#history-select-conv-window { 
+  width: 30px; 
+  padding-left: 5px;
+}
 
-#history-controls-container { 
+.controls-container { 
   padding-top: 10px;
-  padding-left: 25px;
+  padding-left: 10px;
   padding-right: 25px;
 }
 
+#history-controls-container {
+  .controls-container;
+}
+
 .label-history { 
+  margin: 0px;
   font-size: 12px; 
-  padding-left: 10px; 
+  padding-left: 15px; 
   padding-right: 0px;
 }
 
@@ -306,8 +323,7 @@ select:focus, input:focus {
 }
 
 .history-dot {
-  fill: #333; //rgb(253, 46, 46);
-  opacity: .8;
+  opacity: 1;
 }
 
 .history-dot-selected {
@@ -317,9 +333,13 @@ select:focus, input:focus {
 
 // ------------------------------------------------------
 // 
-// Activity tiles
+// Mosaic tiles
 //
 // ------------------------------------------------------
+
+#mosaic-controls-container {
+  .controls-container;
+}
 
 .tile { 
   padding: 3px;
@@ -347,14 +367,23 @@ select:focus, input:focus {
 //
 // ------------------------------------------------------
 
+#details-controls-container {
+  .controls-container;
+}
+
 /*margin of row is -15px, so add this to padding-left*/
 .plot-title { 
   padding-left: 0px; 
   padding-right: 0px; 
 } 
 
-#alt-plot-container, .param-plot-container { 
-  margin-left: 0px; border-bottom: 1px solid @border-color;
+#alt-plot-container {
+  margin-top: -0px;
+  }
+
+.param-plot-container { 
+  margin-left: 0px; 
+  border-top: 1px solid @border-color;
 }
 
 #alt-plot, .param-plot, .hist-plot { 

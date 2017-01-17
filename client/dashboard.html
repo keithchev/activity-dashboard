@@ -29,15 +29,12 @@
     <div class="container-fluid">
     
       <div class="navbar-header">
-        <a class="navbar-brand" href="#">One year of cycling</a>
+        <a class="navbar-brand" href="#">A year of cycling</a>
       </div>
 
     <ul class="nav navbar-nav navbar-right">
-
       <li><a href="http://kchev.org">by kchev.org</a></li>
-
       <li><a href="https://github.com/keithchev/activity-dashboard">Github</a></li>
-
     </ul>
 
     </div>
@@ -47,8 +44,10 @@
 
     <!-- top row: Calendar   -->
     <div class="row">
-      <div class="col-sm-12" id="calendar-tabs-container"></div>
-      <div class="col-sm-12" id="calendar-controls-container"></div>
+      <div class="col-sm-12">
+      <div class="col-sm-7" id="calendar-tabs-container"></div>
+      <div class="col-sm-5" id="calendar-controls-container"></div>
+      </div>
       <div class="col-sm-12" id="calendar-container"></div>
 
     </div>
@@ -121,7 +120,7 @@
     rideDetailDataActivityID: 0,
     currentActivityInfo: {},
     currentDateRangeInfo: {start_date: new Date,},
-    rightPanelContent: 'History', // history, detail, or mosaic, or segments
+    rightPanelContent: "History", // history, detail, or mosaic, or segments
     dateToKey: d3.timeFormat("%Y-%m-%d"),
     keyToDate: d3.timeParse("%Y-%m-%d"),
 
@@ -228,7 +227,7 @@
 
   function openActivity(date) {
     activity_id = rideData[DB.formatDateToKey(date)].activity_id;
-    window.location.assign("http://127.0.0.1/cycling-app-client/getdata.php?id=" + activity_id, '_blank');
+    window.location.assign("http://127.0.0.1/cycling-app-client/getdata.php?id=" + activity_id, "_blank");
   }
 
 
@@ -302,7 +301,7 @@
 
     DB.rideData.map( function(row) { 
 
-      row.timestamp = d3.timeParse("%Y-%m-%d %H:%M:%S")(row.start_date + ' ' + row.start_time);
+      row.timestamp = d3.timeParse("%Y-%m-%d %H:%M:%S")(row.start_date + " " + row.start_time);
 
       row.vert_per_mile = 2*row.elevation_gain / row.total_distance;
 
@@ -355,6 +354,7 @@
   };
 
 
+
   function listOfDictsToDictOfLists(list) {
 
     dict = {};
@@ -375,7 +375,7 @@
 
     color = d3.color(color);
 
-    ['r', 'g', 'b'].map( function(c) {
+    ["r", "g", "b"].map( function(c) {
       color[c] = color[c] + (1-alpha)*255;
       color[c] = color[c] > 255 ? 255 : color[c];
       color[c] = color[c] < 0 ? 0 : color[c];
@@ -389,27 +389,14 @@
     var absMin = d3.min(vals);
     var absMax = d3.max(vals);
     
-    var stddev = d3.deviation(vals);
-
-    var usualMin = d3.max([absMin, d3.median(vals) - stddev/2]);
-    var usualMax = d3.min([absMax, d3.median(vals) + stddev/2]); 
-
-    var colorMin = '#1e90ff'; // pale blue
-    var colorMax = '#ff6347'; // orange
+    var colorMin = "#1e90ff"; // pale blue
+    var colorMax = "#ff6347"; // orange
     
-    colorMin = '#33ff66'; // greenish
-    colorMax = '#ff3300'; // orange
+    colorMin = "#33ff66"; // greenish
+    colorMax = "#ff3300"; // orange
 
-    colorMin = '#0066ff'; // blue
-    colorMax = '#cc33cc'; // pink
-
-    colorMin = lightenColor(d3.color(colorMin), .6);
-    colorMax = lightenColor(d3.color(colorMax), .6);
-
-    tmpColor = d3.scaleLinear().range([colorMin, colorMax]).domain([0,1]);
-    cellColor = d3.scaleLinear()
-               .range([colorMin, tmpColor(.1), tmpColor(.9), colorMax])
-               .domain([absMin, usualMin, usualMax, absMax]);
+    colorMin = "#0066ff"; // blue
+    colorMax = "#cc33cc"; // pink
 
     // schemes: interpolateSpectral, interpolateRdBu, interpolateRdYlBu, interpolateBlues
 
@@ -424,9 +411,9 @@
 
     var props = {};
 
-    var f0 = d3.format('.0f')
-    var f1 = d3.format('.1f')
-    var f2 = d3.format('.2f')
+    var f0 = d3.format(".0f")
+    var f1 = d3.format(".1f")
+    var f2 = d3.format(".2f")
 
     var f_id = function (_) { return _; }
 
@@ -440,98 +427,98 @@
 
     var rideParameters = [
       {
-        key: 'start_date', 
-        label: 'Date', 
-        units: '', 
+        key: "start_date", 
+        label: "Date", 
+        units: "", 
         format: fdate, 
         range: []},
       {
-        key: 'start_time', 
-        label: 'Time',
-        units: '', 
+        key: "start_time", 
+        label: "Time",
+        units: "", 
         format: ftime, 
         range: []},
       {
-        key: 'total_time', 
-        label: 'Duration',
-        units: '', 
+        key: "total_time", 
+        label: "Duration",
+        units: "", 
         format: f_id, 
         range: []},
       {
-        key: 'total_time_sec', 
-        label: 'Duration',
-        units: '',
+        key: "total_time_sec", 
+        label: "Duration",
+        units: "",
         format: f_id, 
         range: [0, 6*3600],
         step: 3600},
       {
-        key: 'total_distance', 
-        label: 'Distance', 
-        units: 'mi', 
+        key: "total_distance", 
+        label: "Distance", 
+        units: "mi", 
         format: f1, 
         range: [0,100],
         step: 20},
 
       {
-        key: 'average_speed', 
-        label: 'Speed', 
-        units: 'mph', 
+        key: "average_speed", 
+        label: "Speed", 
+        units: "mph", 
         format: f2,
         range: [0,20],
         step: 5},
       {
-        key: 'elevation_gain', 
-        label: 'Vert', 
-        units: 'ft', 
+        key: "elevation_gain", 
+        label: "Vert", 
+        units: "ft", 
         format: f0, 
         range: [0, 10000],
         step: 2000},
       {
-        key: 'total_work', 
-        label: 'Work', 
-        units: 'kJ', 
+        key: "total_work", 
+        label: "Work", 
+        units: "kJ", 
         format: f0,
         range: [0, 4000],
         step: 1000},
       {
-        key: 'total_calories', 
-        label: 'Calories', 
-        units: '', 
+        key: "total_calories", 
+        label: "Calories", 
+        units: "", 
         format: f0,
         range: [0, 4000],
         step: 1000},
       {
-        key: 'average_power', 
-        label: 'AP', 
-        units: 'W', 
+        key: "average_power", 
+        label: "AP", 
+        units: "W", 
         format: f0, 
         range: [0,300],
         step: 50},
       {
-        key: 'normalized_power', 
-        label: 'NP', 
-        units: 'W', 
+        key: "normalized_power", 
+        label: "NP", 
+        units: "W", 
         format: f0, 
         range: [0,300],
         step: 50},
       {
-        key: 'intensity_factor', 
-        label: 'IF', 
-        units: '', 
+        key: "intensity_factor", 
+        label: "IF", 
+        units: "", 
         format: f2, 
         range: [0, 1],
         step: .2},
       {
-        key: 'training_stress_score', 
-        label: 'TSS', 
-        units: '', 
+        key: "training_stress_score", 
+        label: "TSS", 
+        units: "", 
         format: f1, 
         range: [0, 300],
         step: 50},
       {
-        key: 'vert_per_mile', 
-        label:'Slope', 
-        units:'ft/mi', 
+        key: "vert_per_mile", 
+        label:"Slope", 
+        units:"ft/mi", 
         format: f0, 
         range: [0, 600],
         step: 100},

@@ -26,12 +26,12 @@ function HistoryPlot(div) {
 // this draws the history plot from scratch (called on init or window resize)
 HistoryPlot.prototype.load = function () {
 
-  var divSize = {'w': parseInt(d3.select("#history-plot-container").style('width')),
-                 'h': parseInt(d3.select("#history-plot-container").style('width'))/2};
+  var divSize = {"w": parseInt(d3.select("#history-plot-container").style("width")),
+                 "h": parseInt(d3.select("#history-plot-container").style("width"))/2};
   
   var divPad   = 0; 
-  var plotPad  = {'h': 20, 'w': 50};
-  var plotSize = {'h': divSize.h - divPad, 'w': divSize.w - divPad};
+  var plotPad  = {"h": 20, "w": 50};
+  var plotSize = {"h": divSize.h - divPad, "w": divSize.w - divPad};
 
   d3.select("#history-plot-container").selectAll("svg").remove();
 
@@ -78,7 +78,8 @@ HistoryPlot.prototype.draw = function () {
      historyPlotConvWindow = d3.select("#history-select-conv-window").property("value"),
      historyPlotParameter  = d3.select("#history-select-parameter").property("value"),
      historyPlotConvType   = d3.select("#history-select-conv-type").property("value"),
-     historyPlotMeanOrSum  = d3.select("#history-select-mean-or-sum").property("checked");
+     historyPlotMeanOrSum  = d3.select("#history-select-mean-or-sum").property("checked"),
+     parameterForColor = d3.select("#calendar-select-parameter-color").property("value");
 
   var plotSize = this.plotSize,
       plotPad  = this.plotPad,
@@ -90,6 +91,19 @@ HistoryPlot.prototype.draw = function () {
   var startDate = d3.timeDay.offset(d3.min(this.rideDict.timestamp), 0),
       endDate   = d3.timeDay.offset(d3.max(this.rideDict.timestamp), 0);
 
+
+  var colorParam = "elevation_gain";
+  var colorParamMax = d3.max(this.rideData, function (d) { return d[colorParam]; });
+
+  this.rideData.forEach(function (d) { 
+                  d.color = d3.interpolateBlues(d[colorParam]/colorParamMax).toString(); });
+
+   function interpolateNoMiddle(t,w) {
+    t = (t > (.5-w) && t < .5) ? .5-w : t;
+    t = (t < (.5+w) && t > .5) ? .5+w : t;
+    return t;
+   }
+
   var convData = [];
   if (historyPlotConvType != "None") {
     convData = calcConvolution(
@@ -100,8 +114,7 @@ HistoryPlot.prototype.draw = function () {
   }
 
   xScale = d3.scaleTime().range([plotPad.w, plotSize.w - plotPad.w]).domain([startDate, endDate]);
-
-  xAxis = d3.axisBottom(xScale).ticks(d3.timeMonth.every(1)).tickFormat("").tickSize(0,0,0);
+  xAxis  = d3.axisBottom(xScale).ticks(d3.timeMonth.every(1)).tickFormat("").tickSize(0,0,0);
 
   xGrid = d3.axisBottom(xScale)
             .ticks(d3.timeMonth.every(1))
@@ -160,6 +173,7 @@ HistoryPlot.prototype.draw = function () {
     .attr("r", dotRadius)
     .attr("cx", function (d) { return xScale(d.timestamp); })
     .attr("cy", function (d) { return yScaleParam(d[historyPlotParameter]); })
+    .attr("fill", function (d) { return d.color; })
     .on("mouseover", function() { d3.select(this).attr("r", dotRadius*2); })
     .on("mouseout", function() {  d3.select(this).attr("r", dotRadius); })
     .on("click", function (d) {  changeActivity(d); });
@@ -230,7 +244,7 @@ function createHistoryPlotControls(targetDiv) {
                 .text(function(d) { return d.label; });
 
   historySelectConvType.selectAll("option")
-                   .data(['None', 'Window', 'Exponential'])
+                   .data(["None", "Window", "Exponential"])
                    .enter().append("option")
                    .attr("value", function (d) { return d; })
                    .text(function(d) { return d; }); 
@@ -248,8 +262,8 @@ function calcConvolution(convType, windowSize, param) {
 
   var rideData = DB.rideData.copy();
 
-  if (convType === 'Window') { calcConvWeight = convWeightWindow; }
-  if (convType === 'Exponential') {calcConvWeight = convWeightExp; }
+  if (convType === "Window") { calcConvWeight = convWeightWindow; }
+  if (convType === "Exponential") {calcConvWeight = convWeightExp; }
 
   var windowSizeInDays = Math.ceil(windowSize / (3600000 * 24));
 

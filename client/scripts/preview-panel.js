@@ -5,8 +5,8 @@ function ActivityList(div) {
     this.div = div;
 
     // hard-coded column keys and names
-    this.columnParams = ['start_date', 'total_distance', 'elevation_gain', 'total_work'];
-    this.columnNames  = ['Date', 'Distance', 'Vert', 'Work'];
+    this.columnParams = ["start_date", "total_distance", "elevation_gain", "total_work"];
+    this.columnNames  = ["Date", "Miles", "Vert", "Work"];
 
 }
 
@@ -71,21 +71,21 @@ function displayActivityStats(currentActivityInfo) {
   var longDate = function (dateString) { return d3.timeFormat("%B %d, %Y")(d3.timeParse("%Y-%m-%d")(dateString)); }
 
   d3.select("#activity-datetime-container").append("span").attr("class", "activity-datetime")
-    .text(longDate(DB.currentActivityInfo['start_date']));
+    .text(longDate(DB.currentActivityInfo["start_date"]));
 
   // d3.select("#activity-datetime-container").append("span").attr("class", "activity-datetime")
-  //   .text(params.start_time.format(DB.currentActivityInfo['start_time']));
+  //   .text(params.start_time.format(DB.currentActivityInfo["start_time"]));
 
   var tbody = d3.select("#activity-info-container").append("table").attr("class", "table").append("tbody");
 
   // these are a list of parameter keys in order of appearance in the table
   var table_parameters = [
-        ['start_time',       'total_time'],
-        ['total_distance',   'average_speed'],
-        ['elevation_gain',   'vert_per_mile'],
-        ['total_work',       'total_calories'],
-        ['average_power',    'normalized_power'],
-        ['intensity_factor', 'training_stress_score', ]];
+        ["start_time",       "total_time"],
+        ["total_distance",   "average_speed"],
+        ["elevation_gain",   "vert_per_mile"],
+        ["total_work",       "total_calories"],
+        ["average_power",    "normalized_power"],
+        ["intensity_factor", "training_stress_score", ]];
 
   var tr = tbody.selectAll("tr").data(table_parameters).enter().append("tr");
 
@@ -93,7 +93,7 @@ function displayActivityStats(currentActivityInfo) {
   var td = tr.selectAll("td").data(function(d) { return d; }).enter().append("td");
 
   td.append("span").attr("class", "activity-parameter-value").text(function(d) { return params[d].format(currentActivityInfo[params[d].key]); });
-  td.append("span").attr("class", "activity-parameter-unit").text(function(d) { return '' + params[d].units; });
+  td.append("span").attr("class", "activity-parameter-unit").text(function(d) { return "" + params[d].units; });
   td.append("br");
   td.append("span").attr("class", "activity-parameter-name").text(function(d) { return params[d].label; });
 }
@@ -139,7 +139,7 @@ function loadMap() {
 
   var ridePoints = [];
 
-  d3.json('getActivityData.php?type=preview&id=' + DB.currentActivityInfo.activity_id, function(err, data) {
+  d3.json("getActivityData.php?type=preview&id=" + DB.currentActivityInfo.activity_id, function(err, data) {
   
     if (!err) {
 

@@ -62,7 +62,7 @@ Calendar.prototype.load = function() {
   var weeks  = d3.timeWeeks(new Date(2016,0,1), new Date(2017,0,1));
   var months = d3.timeMonths(new Date(2016,0,1), new Date(2017,0,1));
 
-  var ridesByWeek = binActivities(weeks, this.calendarParameterColor);
+  var ridesByWeek  = binActivities(weeks, this.calendarParameterColor);
   var ridesByMonth = binActivities(months, this.calendarParameterColor);
 
 
@@ -193,8 +193,7 @@ Calendar.prototype.load = function() {
        .on("click", function(d) { changeSelectedDateRange(d); });
   
   this.rects = rects;
-
-  this.update()
+  this.update();
 
   return this;
 
@@ -231,18 +230,18 @@ function binActivities(dateList, parameterForColor) {
 
   var dt = dateList[1] - dateList[0];
 
-  ridesByDate = dateList.map(function(date) { 
+  ridesByDate = dateList.map(function (date) { 
     
-    var rideDataFiltered = DB.rideData.copy().filter( function(ride) { 
+    var rideDataFiltered = DB.rideData.copy().filter( function (ride) { 
       var rideDate = DB.keyToDate(ride.start_date);
       return ( (rideDate.getTime() > date.getTime()) && (rideDate.getTime() <= (date.getTime() + dt)) );
     });
 
     var paramSums = {};
 
-    var selectableParams = loadProps().rideParameters.filter( function(row) { return row.range.length!==0; });
+    var selectableParams = loadProps().rideParameters.filter( function (row) { return row.range.length!==0; });
 
-    selectableParams.map( function(param) { 
+    selectableParams.map( function (param) { 
       paramSums[param.key] = d3.sum(rideDataFiltered.map( function (rideDatum) { return rideDatum[param.key]; }));
     });
 
@@ -251,13 +250,12 @@ function binActivities(dateList, parameterForColor) {
   });
 
 
-  var paramVals = ridesByDate.map(function(d) { return d.paramSums[parameterForColor]; });
-
-  paramVals = paramVals.filter(function(d) { return d; });
+  var paramVals = ridesByDate.map(function (d) { return d.paramSums[parameterForColor]; })
+                             .filter(function (d) { return d; });
 
   var cellColor = calendarColorScale(paramVals);
 
-  ridesByDate = ridesByDate.map(function(d) { 
+  ridesByDate = ridesByDate.map(function (d) { 
                   d.color = cellColor(d.paramSums[parameterForColor]).toString(); return d; });
 
   return ridesByDate;
@@ -280,18 +278,12 @@ function createCalendarControls(div) {
 
   var classStr = "form-control form-control-history";
 
-  formdiv.append("label")
-        .attr("for", "calendar-select-parameter")
-        .attr("class", "label-history").text("Color: ");
-
+  formdiv.append("label").attr("class", "label-history").text("Color: ");
   formdiv.append("select")
         .attr("class", classStr)
         .attr("id", "calendar-select-parameter-color");
 
-  formdiv.append("label")
-        .attr("for", "calendar-select-parameter")
-        .attr("class", "label-history").text("Height: ");
-
+  formdiv.append("label").attr("class", "label-history").text("Height: ");
   formdiv.append("select")
         .attr("class", classStr)
         .attr("id", "calendar-select-parameter-height");

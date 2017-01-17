@@ -29,7 +29,7 @@ ActivityList.prototype.load = function(rideData) {
               .on("mouseover", function() { d3.select(this).attr("class", d3.select(this).attr("class") + " mouseoverd"); })
               .on("mouseout", function() { d3.select(this).attr("class", d3.select(this).attr("class").replace(" mouseoverd","")); })
               .on("click", function (d) { 
-                d3.select("#div-activity-list").selectAll("tr").attr("class", "activity-list-row");
+                d3.select("#activity-list-container").selectAll("tr").attr("class", "activity-list-row");
                 d3.select(this).attr("class", "activity-list-row selected");
                 changeActivity(d); });
 
@@ -65,18 +65,18 @@ function displayActivityStats(currentActivityInfo) {
 
   var params = loadProps().rideParametersByKey;
 
-  d3.select("#div-activity-info").select("table").remove();
-  d3.select("#div-activity-datetime").selectAll("span").remove();
+  d3.select("#activity-info-container").select("table").remove();
+  d3.select("#activity-datetime-container").selectAll("span").remove();
 
   var longDate = function (dateString) { return d3.timeFormat("%B %d, %Y")(d3.timeParse("%Y-%m-%d")(dateString)); }
 
-  d3.select("#div-activity-datetime").append("span").attr("class", "activity-datetime")
+  d3.select("#activity-datetime-container").append("span").attr("class", "activity-datetime")
     .text(longDate(DB.currentActivityInfo['start_date']));
 
-  // d3.select("#div-activity-datetime").append("span").attr("class", "activity-datetime")
+  // d3.select("#activity-datetime-container").append("span").attr("class", "activity-datetime")
   //   .text(params.start_time.format(DB.currentActivityInfo['start_time']));
 
-  var tbody = d3.select("#div-activity-info").append("table").attr("class", "table").append("tbody");
+  var tbody = d3.select("#activity-info-container").append("table").attr("class", "table").append("tbody");
 
   // these are a list of parameter keys in order of appearance in the table
   var table_parameters = [
@@ -108,7 +108,7 @@ function initMap() {
   };
 
   var markerOptions = {
-      fillColor: 'steelblue',
+      fillColor: "steelblue",
       stroke: true,
       weight: 2,
       color: "#fff",
@@ -116,11 +116,11 @@ function initMap() {
       fillOpacity: 1,
      };
 
-  DB.previewMap = new L.map('div-activity-map');
+  DB.previewMap = new L.map("activity-map-container");
 
-  L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18}).addTo(DB.previewMap);
+  L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 18}).addTo(DB.previewMap);
 
-  DB.previewMap.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text
+  DB.previewMap.attributionControl.setPrefix(""); // Don't show the 'Powered by Leaflet' text
 
   // var berkeley = new L.LatLng(37.86, -122.25); // geographical point (longitude and latitude)
   // DB.previewMap.setView(berkeley, 13);

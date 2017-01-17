@@ -15,7 +15,8 @@
 
   <!--  leaflet css -->
   <link rel="stylesheet" href="./components/leaflet/leaflet.css" />
-
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+  
   <style>
   
   </style>
@@ -28,42 +29,47 @@
     <div class="container-fluid">
     
       <div class="navbar-header">
-        <a class="navbar-brand" href="#">;(cycling + running).viz()</a>
+        <a class="navbar-brand" href="#">One year of cycling</a>
       </div>
 
     <ul class="nav navbar-nav navbar-right">
-      <li><a href="about.html">About</a></li>
-      <li><a href="http://kchev.org">kchev.org</a></li>
+
+      <li><a href="http://kchev.org">by kchev.org</a></li>
+
+      <li><a href="https://github.com/keithchev/activity-dashboard">Github</a></li>
+
     </ul>
 
     </div>
   </nav>
 
-  <div class="container-fluid">
+  <div class="container-fluid" id="main-container">
 
     <!-- top row: Calendar   -->
     <div class="row">
-      <div class="col-sm-12">  
-        <div id="div-calendar" style="padding-top:10px; padding-bottom: 15px;"></div>
-      </div>
+      <div class="col-sm-12" id="calendar-tabs-container"></div>
+      <div class="col-sm-12" id="calendar-controls-container"></div>
+      <div class="col-sm-12" id="calendar-container"></div>
+
     </div>
 
     <!-- left column: activity info and map -->
     <div class="row">
       <div class="col-sm-3">  
+
+        <div class="header2">Selected activities</div>
+        <div id="activity-list-container"></div>
+
+        <div class="header2">Activity stats</div>
+        <div class="table-responsive" id="activity-info-container"></div>
         
-        <div id="div-activity-list" style="padding-bottom: 15px;"></div>
-        <div id="div-activity-datetime" style="padding-top: 0px;"></div>
-        <div class="table-responsive" id="div-activity-info"></div>
-        
-        <div id="div-activity-map" style="height: 200px;"></div>
+        <div id="activity-map-container"></div>
       </div>
 
     
     <!-- right column: history plot or ride detail plots -->
-    <div class="col-sm-9" id="div-activity-links"></div>
-    <div class="col-sm-9" id="div-activity-links-spacer"></div>
-    <div class="col-sm-9" id="div-main-container">
+    <div class="col-sm-9" id="right-panel-tabs-container"></div>
+    <div class="col-sm-9" id="right-container">
 
     </div> <!-- end right column -->
   </div>   <!-- end row -->
@@ -115,7 +121,7 @@
     rideDetailDataActivityID: 0,
     currentActivityInfo: {},
     currentDateRangeInfo: {start_date: new Date,},
-    rightPanelContent: 'detail', // history, detail, or mosaic, or segments
+    rightPanelContent: 'History', // history, detail, or mosaic, or segments
     dateToKey: d3.timeFormat("%Y-%m-%d"),
     keyToDate: d3.timeParse("%Y-%m-%d"),
 
@@ -189,33 +195,33 @@
 
   function loadRightPanel() {
 
-    if (DB.rightPanelContent==="detail") {
+    if (DB.rightPanelContent==="Details") {
       drawActivityDetail();
     } 
-    if (DB.rightPanelContent==="history") {
-      DB.historyPlot = new HistoryPlot(d3.select("#div-main-container"));
+    if (DB.rightPanelContent==="History") {
+      DB.historyPlot = new HistoryPlot(d3.select("#right-container"));
       DB.historyPlot.load();
     }
-    if (DB.rightPanelContent==="mosaic") {
+    if (DB.rightPanelContent==="Mosaic") {
       DB.mosaic = makeMosaic().draw().sort().update();
     }
-    if (DB.rightPanelContent==="segments") {
+    if (DB.rightPanelContent==="Segments") {
       makeSegments();
     }
   }
 
   function updateRightPanel() {
 
-    if (DB.rightPanelContent==="detail") {
+    if (DB.rightPanelContent==="Detail") {
       drawActivityDetail();
     } 
-    if (DB.rightPanelContent==="history") {
+    if (DB.rightPanelContent==="History") {
       DB.historyPlot.update();
     }
-    if (DB.rightPanelContent==="mosaic") {
+    if (DB.rightPanelContent==="Mosaic") {
       DB.mosaic.update();
     }
-    if (DB.rightPanelContent==="segments") {
+    if (DB.rightPanelContent==="Segments") {
       
     }
   }
@@ -235,87 +241,48 @@
     initMap();
 
     // initialize the panels
-    DB.activityList = new ActivityList(d3.select("#div-activity-list"));
-    // DB.historyPlot  = new HistoryPlot(d3.select("#div-main-container"));
-    DB.calendar     = new Calendar(d3.select("#div-calendar"));
+    DB.activityList = new ActivityList(d3.select("#activity-list-container"));
 
+    // DB.historyPlot  = new HistoryPlot(d3.select("#right-container"));
+    DB.calendar     = new Calendar(d3.select("#calendar-container"));
 
-    loadRightPanelButtons();
+    loadRightPanelTabs();
 
-    // load right panel (history or details) first, because this relies only on currentActivityInfo 
-    // and is updated by calls from DB.calendar
+    // load right panel (history or details) first, 
+    // because this relies only on currentActivityInfo and is updated by DB.calendar
     loadRightPanel();
 
-    // next load calendar, which will set DB.currentActivityDateRange corresponding to initial currentActivity chosen above
+    // next load calendar, which will set DB.currentActivityDateRange 
+    // corresponding to initial currentActivity chosen above
     DB.calendar.load().update();
 
   }
 
-  function loadRightPanelButtons() {
+  function loadRightPanelTabs() {
 
-    d3.select("#div-activity-links").selectAll("button").remove();
+    var tabs = d3.select("#right-panel-tabs-container");
 
-    d3.select("#div-activity-links")
-      .append("button")
-      .attr("class", "btn btn-custom")
-      .attr("id", "view-history")
-      .text("History")
-      .on("click", handleRightPanelButtonClick);
+    var tabData = [
+      { id: "history-tab", text: "History"},
+      { id: "detail-tab", text: "Details"},
+      { id: "mosaic-tab", text: "Mosaic"},
+      { id: "segments-tab", text: "Segments"} ];
 
-    d3.select("#div-activity-links")
-      .append("button")
-      .attr("class", "btn btn-custom")
-      .attr("id", "view-detail")
-      .text("Detail")
-      .on("click", handleRightPanelButtonClick);
+    tabs.selectAll(".tab").data(tabData)
+        .enter().append("div").attr("class", "tab")
+        .attr("id", function (d) { return d.id; })
+        .text(function (d) { return d.text; })
+        .on("click", function (d) {
 
-    d3.select("#div-activity-links")
-      .append("button")
-      .attr("class", "btn btn-custom")
-      .attr("id", "view-mosaic")
-      .text("Mosaic")
-      .on("click", handleRightPanelButtonClick);
+          tabs.selectAll(".tab").classed("tab-active", false);
+          d3.select(this).classed("tab-active", true);
 
-    d3.select("#div-activity-links")
-      .append("button")
-      .attr("class", "btn btn-custom")
-      .attr("id", "view-segments")
-      .text("Segments")
-      .on("click", handleRightPanelButtonClick);
+          DB.rightPanelContent = d.text;
+          loadRightPanel(DB.currentActivityInfo); 
+        });
 
-
-    d3.select("#view-history").attr("class", DB.rightPanelContent==="history" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-detail").attr("class", DB.rightPanelContent==="detail" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-mosaic").attr("class", DB.rightPanelContent==="mosaic" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-segments").attr("class", DB.rightPanelContent==="segments" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    
-    }
-
-  function handleRightPanelButtonClick() {
-
-    var id = d3.select(this).attr("id");
-
-    DB.rightPanelContent = "";
-
-    if (id==="view-history") {
-      DB.rightPanelContent = "history";
-    }
-    if (id==="view-detail") {
-      DB.rightPanelContent = "detail";
-    }
-    if (id==="view-mosaic") {
-      DB.rightPanelContent = "mosaic";
-    }
-    if (id==="view-segments") {
-      DB.rightPanelContent = "segments";
-    }
-
-    d3.select("#view-history").attr("class", DB.rightPanelContent==="history" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-detail").attr("class", DB.rightPanelContent==="detail" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-mosaic").attr("class", DB.rightPanelContent==="mosaic" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    d3.select("#view-segments").attr("class", DB.rightPanelContent==="segments" ? "btn btn-custom btn-custom-selected" : "btn btn-custom");
-    
-    loadRightPanel(DB.currentActivityInfo); 
+    tabs.selectAll(".tab")
+        .classed("tab-active", function (d) { return d.text==DB.rightPanelContent; });
 
   }
 
@@ -581,11 +548,11 @@
 
   function makeSegments() {
 
-    var div = d3.select("#div-main-container");
+    var div = d3.select("#right-container");
 
-    d3.selectAll("#div-main-container form").remove();
-    d3.selectAll("#div-main-container div").remove();
-    d3.selectAll("#div-main-container svg").remove();
+    d3.selectAll("#right-container form").remove();
+    d3.selectAll("#right-container div").remove();
+    d3.selectAll("#right-container svg").remove();
     
     div.append("div").attr("class", "").attr("id", "segments-plot-container");
 

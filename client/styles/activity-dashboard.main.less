@@ -1,66 +1,75 @@
+@link-color: #4682b4;
+
+@orange: #ffd080;
+@light-orange: #ffe9c3;
+
+@border-color: #ccc;
+
+@button-color: #eee;
+@button-color-hover: #f7f7f7;
+@button-color-selected: #ddd;
+
+@debug-border: 0px;
+
+.main-font {
+  //font-family: "Open sans", sans-serif; 
+}
+.header-font {
+  //font-family: "Open sans", sans-serif;
+  font-weight: bold;
+}
+
+
+html { .main-font; }
+
+body { 
+  padding-top: 0px;
+  .main-font;
+}
+
+div { border: @debug-border solid #f66; }
+svg { border: @debug-border solid #66f; }
+
+
 body { padding-top: 0px; }
 
-div { border: 0px solid #ff6666; }
-svg { border: 0px solid #6666ff; }
+.zero-pad-left {padding-left: 0px;}
 
-
-div.zero-pad-left {padding-left: 0px;}
-
-a         { color: #4682b4; text-decoration: none; }
+a         { color: @link-color; text-decoration: none; }
 a:hover   { color: #b0c4de; text-decoration: none; }
-a:visited { color: #4682b4; text-decoration: none; }
+a:visited { color: @link-color; text-decoration: none; }
 
 .table { margin-bottom: 0px; }
 
 .axis { shape-rendering: crispEdges; }
 path { shape-rendering: auto; }
-
 rect { shape-rendering: crispEdges; }
 
-// ------------------------------------------------------
-// 
-// custom button style
-//
-// ------------------------------------------------------
+.header1 {
+  font-weight: bold;
+  font-size: 24px;
+  line-height: 1;
+}
+.header2 {
+  font-weight: bold;
+  font-size: 18px;
+}
 
-.btn-custom:focus { outline: none !important; }
+#main-container {
+  padding-top: 10px;
+}
 
-.btn-custom {
-  background-color: #efefef;
-  border: 0px solid #bbb;
-  color: #000;
-  border-radius: 0px;
-  width: 120px;
-  padding: 0px;
-}
-.btn-custom:focus {
-  background-color: #fff;
-}
-.btn-custom:hover {
-  background-color: #eee;
-}
-.btn-custom:active,
-.btn-custom:active:hover,
-.btn-custom:active:focus {
-  background-color: #ddd;
-}
-.btn-custom-selected,
-.btn-custom-selected:hover,
-.btn-custom-selected:focus,
-.btn-custom-selected:active,
-.btn-custom-selected:active:hover,
-.btn-custom-selected:active:focus {
-  background-color: #ffd080;
-}
 
 /*questionable hack to eliminate blue halo around select elements*/
-select:focus, 
-input:focus { 
-  outline: 1px solid #ccc !important; box-shadow: none !important;  
+select:focus, input:focus { 
+  outline: 1px solid #ccc !important; 
+  box-shadow: none !important;  
 }
 
-.btn, .btn:active, .btn:focus, .btn:active:focus, .btn:focus:active { 
-  box-shadow: none !important; }
+.btn, .btn:active, .btn:focus, 
+.btn:active:focus, .btn:focus:active { 
+  box-shadow: none !important; 
+}
 
 
 // ------------------------------------------------------
@@ -70,8 +79,12 @@ input:focus {
 // ------------------------------------------------------
 
 .navbar-static-top { border: 0; margin: 0; }
-/*.navbar-inverse { background-color: #f8f8f8;}*/
-.navbar-inverse .navbar-brand { color: #ddd; font-weight: bold; }
+
+.navbar-inverse .navbar-brand { 
+  color: #ddd; 
+  font-weight: bold; 
+  font-size: 24px;
+}
 .navbar-inverse .navbar-nav > li > a { color: #ffd040; }
 
 .container-fluid { padding-right: 35px; }
@@ -83,12 +96,30 @@ input:focus {
 //
 // ------------------------------------------------------
 
-.month-label {  font-size: 8px; }
+#calendar-container {
+  padding-top: 10px;
+  padding-bottom: 15px;
+}
+
+#calendar-tabs-container {
+  padding-bottom: 10px;
+}
+
+#calendar-controls-container {
+  padding-left: 10px;
+}
+
+.month-label {  font-size: 10px; }
 
 .calendar-day { 
   shape-rendering: crispEdges;
   stroke: #fff;
 }
+
+.calendar-rect-active {
+  cursor: pointer;
+}
+
 .calendar-week {
   shape-rendering: crispEdges;
   stroke: none;
@@ -120,38 +151,51 @@ input:focus {
 //
 // ------------------------------------------------------
 
-#div-activity-list th {
-  font-size: 11px;
+#activity-list-container { padding-bottom: 15px; }
+
+#activity-list-container th {
+  font-size: 10px;
   font-weight: bold;
   border: 0px;
-  padding: 2px;
-  padding-bottom: 0px;
-  text-align: center;
+  padding: 0px;
+  margin: 2px;
+  margin-bottom: 0px;
+  text-align: left;
+  border-bottom: 1px solid @border-color;
 }
 
-#div-activity-list td {
+#activity-list-container td {
   padding: 2px;
+  padding-left: 0px;
   line-height: 1;
   border: 0px;
-  border-right: 1px solid #bbb;
-  border-left: 1px solid #bbb;
-  text-align: center;
+  //border-right: 1px solid #bbb;
+  //border-left: 1px solid #bbb;
+  text-align: left;
 }
 
-#div-activity-list tr.activity-list-row { background-color: #fff; }
-#div-activity-list tr.mouseoverd { background-color: #eee; }
-#div-activity-list tr.selected { background-color: #ffd080; }
+.activity-list-row { 
+  cursor: pointer;
+  &:hover {
+    background-color: @light-orange;
+  }
+}
+
+.activity-list-row.selected { 
+  background-color: @orange; 
+}
  
 .activity-list-item {
   font-size: 10px; 
 }
 
-#div-activity-info td { 
+#activity-info-container td { 
   padding: 0px;
   padding-top: 4px;
   padding-bottom: 4px; 
   line-height: 1; 
 }
+
 .activity-parameter-name {
   color: #666;
   font-size: 12px;
@@ -168,21 +212,52 @@ input:focus {
   padding-right: 5px;
 }
 
+#activity-map-container {
+  height: 200px;
+}
 
-// right panel container (history or details)
-#div-main-container { border: none;
-  border-left: 1px solid #ccc; }
+/// ------------------------------------------------------
+// 
+// Right panel container
+//
+// ------------------------------------------------------
 
-#div-activity-links { 
+#right-container { 
+  border: none;
+  border-left: 1px solid @border-color; 
+}
+
+#right-panel-tabs-container { 
   text-align: left; 
-  background-color: #fff; 
   padding-top: 10px; 
-  padding-bottom: 0px; }
-  
-#div-activity-links-spacer { 
-  background-color: #ffd080; 
-  padding-top: 0px; 
-  padding-bottom: 5px; }
+  padding-bottom: 0px; 
+}
+
+.tab {
+  font-size: 18px;
+  border-bottom: 1px solid @border-color;
+  width: 100px;
+  margin-left: 5px;
+  margin-right: 5px;
+  padding-top: 5px;
+  padding-bottom: 0px;
+  text-align: center;
+  display: inline-block;
+  cursor: pointer;
+  &:hover {
+    background-color:@light-orange;
+  }
+}
+
+.tab-active {
+  font-weight: bold;
+  background-color: @orange;
+  border-bottom: 1px solid @orange;
+  &:hover {
+    background-color: @orange;
+  }
+}
+
 
 // ------------------------------------------------------
 // 
@@ -203,12 +278,17 @@ input:focus {
 
 #history-select-conv-window { width: 30px; }
 
-#div-history-controls { padding-top: 10px;
-                        padding-left: 25px;
-                        padding-right: 25px;
-                      }
+#history-controls-container { 
+  padding-top: 10px;
+  padding-left: 25px;
+  padding-right: 25px;
+}
 
-.label-history { font-size: 12px; padding-left: 10px; padding-right: 0px;}
+.label-history { 
+  font-size: 12px; 
+  padding-left: 10px; 
+  padding-right: 0px;
+}
 
 #history-x-axis line { stroke: #aaa; opacity: 0.7; }
 #history-x-axis path { stroke-width: 0; }
@@ -217,6 +297,23 @@ input:focus {
 #history-y-axis-right line { opacity: 0.7; }
 #history-y-axis-left path { stroke-width: 0; }
 #history-y-axis-right path { stroke-width: 0; }
+
+#conv-path {
+  stroke: none;
+  stroke-width: 2px;
+  fill: #999; //#ffc9c0;
+  opacity: .5;
+}
+
+.history-dot {
+  fill: #333; //rgb(253, 46, 46);
+  opacity: .8;
+}
+
+.history-dot-selected {
+  fill: orange;
+}
+
 
 // ------------------------------------------------------
 // 
@@ -256,14 +353,18 @@ input:focus {
   padding-right: 0px; 
 } 
 
-#alt-plot-container, 
-.param-plot-container { margin-left: 0px; border-bottom: 1px solid #bbb;}
+#alt-plot-container, .param-plot-container { 
+  margin-left: 0px; border-bottom: 1px solid @border-color;
+}
 
-#alt-plot, .param-plot, .hist-plot { padding-left: 0px; padding-right: 0px;}
+#alt-plot, .param-plot, .hist-plot { 
+  padding-left: 0px; padding-right: 0px;
+}
 
 #alt-plot-y-axis line { stroke: #aaa; opacity: 0.7; }
+
 // this includes both the vertical axis line and the top-most horizontal line
-// (with length is controlled by tick width)
+// (length is controlled by tick width)
 #alt-plot-y-axis path { visibility: hidden; }
 
 .param-plot #y-axis path { stroke: #666; }
@@ -291,7 +392,11 @@ input:focus {
   opacity: 0.7;
 }
 
-.hist-plot #bin-position-axis path { stroke: #666; stroke-width: 1; }
+.hist-plot #bin-position-axis path { 
+  stroke: #666; 
+  stroke-width: 1; 
+}
+
 .hist-plot #bin-height-axis path { stroke-width: 0; }
 .hist-plot #bin-height-axis text { font-size: 9px; }
 
@@ -305,7 +410,8 @@ input:focus {
 }
 
 .d3-tip-line {
-  padding-top: 1px; padding-bottom: 1px;
+  padding-top: 1px; 
+  padding-bottom: 1px;
 }
 
 .plot-title-value {
@@ -330,7 +436,6 @@ path.mouse-position-path {
   stroke-width: 1;
   shape-rendering: crispEdges;
 }
-
 
 path.seg-line-plot-path {
   fill: none;

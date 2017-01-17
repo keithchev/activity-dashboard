@@ -3,11 +3,11 @@
 
 function drawActivityDetail() {
 
-  var div = d3.select("#div-main-container");
+  var div = d3.select("#right-container");
 
-  d3.selectAll("#div-main-container form").remove();
-  d3.selectAll("#div-main-container div").remove();
-  d3.selectAll("#div-main-container svg").remove();
+  d3.selectAll("#right-container form").remove();
+  d3.selectAll("#right-container div").remove();
+  d3.selectAll("#right-container svg").remove();
   
   createActivityDetailControls(div);
 
@@ -29,9 +29,9 @@ function drawActivityDetail() {
 
     var jsonFile = "getActivityData.php?type=detail&id=" + DB.currentActivityInfo.activity_id;
 
-    // if no postgres 
-    var LAPTOP = false;
-    if (LAPTOP) {
+    // if no postgres server 
+    var NO_DB = true;
+    if (NO_DB) {
       jsonFile = "http://127.0.0.1:7777/dev2/activity-dashboard/ignore/test_activity_id=20151231110101.json";
     }
 
@@ -905,7 +905,7 @@ function createActivityDetailControls(div) {
   div.selectAll("form").remove();
 
   var formdiv = div.append("form").attr("class", "form-inline")
-                   .append("div").attr("class", "form-group").attr("id", "div-details-controls");
+                   .append("div").attr("class", "form-group").attr("id", "details-controls-container");
 
   var classStr = "form-control form-control-history";
 

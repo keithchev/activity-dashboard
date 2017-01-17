@@ -2,32 +2,46 @@
 
 function Calendar(div) {
 
-  createCalendarControls(div);
   this.div = div;
+
+  var tabs = d3.select("#calendar-tabs-container");
 
   var self = this;
 
-  div.selectAll("select").on("change", this.onChange.bind(this) );
+  tabs.selectAll(".tab").data(["Months", "Weeks", "Days"])
+      .enter().append("div")
+      .attr("class", "tab")
+      .attr("id", function (d) { return d; })
+      .text(function (d) { return d; })
+      .on("click", function () {
+        tabs.selectAll(".tab").classed("tab-active", false);
+        d3.select(this).classed("tab-active", true);
+        self.load();
+      });
 
-  // d3.select("#calendar-select-parameter-color").on("change", this.onChange.bind(this) );
-  // d3.select("#calendar-select-parameter-height").on("change", this.onChange.bind(this) );
-  // d3.select("#calendar-select-unit").on("change", this.onChange.bind(this) );
+  tabs.select("#Days").classed("tab-active", true);
+
+
+  var calendarControls = d3.select("#calendar-controls-container");
+
+  createCalendarControls(calendarControls);
+
+  calendarControls.selectAll("select").on("change", this.onChange.bind(this) );
 
 }
 
 Calendar.prototype.onChange = function () {
-
   this.load();
-
 }
 
 Calendar.prototype.load = function() {
 
-  this.calendarParameterColor = d3.select("#calendar-select-parameter-color").property("value");
+  this.calendarParameterColor  = d3.select("#calendar-select-parameter-color").property("value");
   this.calendarParameterHeight = d3.select("#calendar-select-parameter-height").property("value");
-  this.calendarUnit      = d3.select("#calendar-select-unit").property("value");
 
-  var calWidth = parseInt(this.div.style('width'));
+  this.calendarUnit = d3.select("#calendar-tabs-container").selectAll(".tab-active").text();
+
+  var calWidth = parseInt(this.div.style("width"));
 
   var monthLabelOffset = 15;
   var monthSpacer = 2;
@@ -61,21 +75,22 @@ Calendar.prototype.load = function() {
   var padL = 40; var padR = 0; var padB = 15; var padT = 3;
   var rectHeight = (calHeight - padT - padB);
 
-  if (this.calendarUnit=="week") {
+
+  if (this.calendarUnit==="Weeks") {
     var dateRangeInfo = ridesByWeek;
     var rectWidth  = Math.floor((calWidth - padL - padR)/52)-1;
     // this function positions the rectangles horizontally
     var rectXPos = function(d) { return padL + (rectWidth+1)*(d.start_date.getWeek()-2); }
   }
 
-  if (this.calendarUnit=="month") {
+  if (this.calendarUnit==="Months") {
     var dateRangeInfo = ridesByMonth;
     var rectWidth = Math.floor((calWidth - padL - padR)/12)-1;
     var rectXPos = function(d) { return padL + (rectWidth+1)*(d.start_date.getMonth()); }
   }
 
   // draw the calendar if it's month or week view
-  if (this.calendarUnit != "day") {
+  if (this.calendarUnit!=="Days") {
 
     // make a scale for the rect height using the within-week/bin sum of the height parameter
     var rectHeightScale = d3.scaleLinear()
@@ -120,7 +135,7 @@ Calendar.prototype.load = function() {
   } 
 
   // else, draw days: this code is fundamentally different from month/week views
-  if (this.calendarUnit=="day") {
+  if (this.calendarUnit==="Days") {
 
     var ridesByDay = binActivities(days, this.calendarParameterColor);
 
@@ -144,10 +159,7 @@ Calendar.prototype.load = function() {
                .attr("height", cellSize)
                .attr("x", function(d) { return calcCalendarCellPosition(d.start_date, cellSize, monthSpacer).x; })
                .attr("y", function(d) { return calcCalendarCellPosition(d.start_date, cellSize, monthSpacer).y + monthLabelOffset; });
-
   }
-
-  rects.attr("fill", "#ddd");
 
   var params = loadProps().rideParametersByKey;
 
@@ -166,8 +178,11 @@ Calendar.prototype.load = function() {
 
   svg.call(rectTip);
 
+  rects.attr("fill", "#ddd");
+
   rects.filter( function(d) { return d.rideData.length; })
        .attr("fill", function(d) { return d.color; })
+       .classed("calendar-rect-active", true)
        .on("mouseover", function (d) { 
           d3.select(this).attr("opacity", 0.5); 
           rectTip.show(d); })
@@ -193,12 +208,12 @@ Calendar.prototype.update = function () {
   // find the rect corresponding to the date range the currentActivity is in 
   var dateRangeInfo = this.rects.filter(function(d) { 
     return d.rideData.filter(function(rideDatum) { 
-      return rideDatum.activity_id==DB.currentActivityInfo.activity_id; 
+      return rideDatum.activity_id===DB.currentActivityInfo.activity_id; 
     }).length;
   }).attr("fill", "orange").data()[0];
 
   // if the new date range is not the current date range, reset it (this occurs if a distant activity was selected from history plot)
-  if (dateRangeInfo.start_date.toString() != DB.currentDateRangeInfo.start_date.toString()){
+  if (dateRangeInfo.start_date.toString() !== DB.currentDateRangeInfo.start_date.toString()){
 
     changeSelectedDateRange(dateRangeInfo);
 
@@ -225,7 +240,7 @@ function binActivities(dateList, parameterForColor) {
 
     var paramSums = {};
 
-    var selectableParams = loadProps().rideParameters.filter( function(row) { return row.range.length!=0; });
+    var selectableParams = loadProps().rideParameters.filter( function(row) { return row.range.length!==0; });
 
     selectableParams.map( function(param) { 
       paramSums[param.key] = d3.sum(rideDataFiltered.map( function (rideDatum) { return rideDatum[param.key]; }));
@@ -250,30 +265,41 @@ function binActivities(dateList, parameterForColor) {
 }
 
 
+function createCalendarTabs(div) {
+
+
+}
+
 
 function createCalendarControls(div) {
 
   div.selectAll("form").remove();
 
   var formdiv = div.append("form").attr("class", "form-inline")
-                   .append("div").attr("class", "form-group").attr("id", "div-calendar-controls");
+                   .append("div").attr("class", "form-group");
 
   var classStr = "form-control form-control-history";
 
-  formdiv.append("label").attr("for", "calendar-select-unit").attr("class", "label-history").text("Show by: ");
-  formdiv.append("select").attr("class", classStr).attr("id", "calendar-select-unit");
+  formdiv.append("label")
+        .attr("for", "calendar-select-parameter")
+        .attr("class", "label-history").text("Color: ");
 
-  formdiv.append("label").attr("for", "calendar-select-parameter").attr("class", "label-history").text("Color by: ");
-  formdiv.append("select").attr("class", classStr).attr("id", "calendar-select-parameter-color");
+  formdiv.append("select")
+        .attr("class", classStr)
+        .attr("id", "calendar-select-parameter-color");
 
-  formdiv.append("label").attr("for", "calendar-select-parameter").attr("class", "label-history").text("Height by: ");
-  formdiv.append("select").attr("class", classStr).attr("id", "calendar-select-parameter-height");
+  formdiv.append("label")
+        .attr("for", "calendar-select-parameter")
+        .attr("class", "label-history").text("Height: ");
 
-  var selectionCalParamColor = d3.select("#calendar-select-parameter-color");
+  formdiv.append("select")
+        .attr("class", classStr)
+        .attr("id", "calendar-select-parameter-height");
+
+  var selectionCalParamColor  = d3.select("#calendar-select-parameter-color");
   var selectionCalParamHeight = d3.select("#calendar-select-parameter-height");
-  var selectionCalUnit  = d3.select("#calendar-select-unit");
 
-  var selectableParams = loadProps().rideParameters.filter( function(row) { return row.range.length!=0; });
+  var selectableParams = loadProps().rideParameters.filter( function(row) { return row.range.length!==0; });
   
   selectionCalParamColor.selectAll("option")
                         .data(selectableParams)
@@ -287,15 +313,8 @@ function createCalendarControls(div) {
                         .attr("value", function(d) { return d.key; })
                         .text(function(d) { return d.label; });
 
-  selectionCalUnit.selectAll("option")
-                   .data(['day', 'week', 'month'])
-                   .enter().append("option")
-                   .attr("value", function (d) { return d; })
-                   .text(function(d) { return d.toUpperCase()[0] + d.slice(1); });
-
   selectionCalParamColor.property("value", "total_distance");
   selectionCalParamHeight.property("value", "elevation_gain");
-  selectionCalUnit.property("value", "week");
 
 }
 
@@ -310,9 +329,9 @@ function calcCalendarCellPosition(date, cellSize, monthSpacer) {
   var monthStartDate = new Date(y, m, 1);
 
   // we want Monday to be column 0, but .getDay() sets 0 at Sunday
-  var monthStart_DOW = monthStartDate.getDay() - 1 == -1 ? 6 : monthStartDate.getDay() - 1;
+  var monthStart_DOW = monthStartDate.getDay() - 1 === -1 ? 6 : monthStartDate.getDay() - 1;
 
-  var d_DOW = date.getDay()-1 == -1 ? 6 : date.getDay()-1;
+  var d_DOW = date.getDay()-1 === -1 ? 6 : date.getDay()-1;
   var offset = monthStart_DOW > 0 ? 7 - monthStart_DOW : 0;
 
    // this is the column - offset by prior months and spacing between months

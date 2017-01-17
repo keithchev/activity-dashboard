@@ -5,10 +5,10 @@
 function makeMosaic() {
   
   // hard-coded target div
-  var div = d3.select("#div-main-container");
+  var div = d3.select("#right-container");
 
-  d3.selectAll("#div-main-container form").remove();
-  d3.selectAll("#div-main-container div").remove();
+  d3.selectAll("#right-container form").remove();
+  d3.selectAll("#right-container div").remove();
 
   drawMosaicControls(div);
 
@@ -248,14 +248,14 @@ function makeMosaic() {
   div.selectAll("form").remove();
 
   var formdiv = div.append("form").attr("class", "form-inline")
-                   .append("div").attr("class", "form-group").attr("id", "div-mosaic-controls");
+                   .append("div").attr("class", "form-group").attr("id", "mosaic-controls-container");
 
   var classStr = "form-control form-control-history";
 
-  formdiv.append("label").attr("class", "label-history").text("Order by: ");
+  formdiv.append("label").attr("class", "label-history").text("Order: ");
   formdiv.append("select").attr("class", classStr).attr("id", "mosaic-select-parameter-order");
 
-  formdiv.append("label").attr("class", "label-history").text("Color by: ");
+  formdiv.append("label").attr("class", "label-history").text("Color: ");
   formdiv.append("select").attr("class", classStr).attr("id", "mosaic-select-parameter-color");
 
   formdiv.append("label").attr("class", "label-history").text("Scale: ");

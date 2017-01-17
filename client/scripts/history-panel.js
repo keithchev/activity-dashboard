@@ -8,7 +8,7 @@ function HistoryPlot(div) {
 
   createHistoryPlotControls(this.div);
 
-  div.append("div").attr("id", "div-history-plot");
+  div.append("div").attr("id", "history-plot-container");
 
   this.rideData = DB.rideData.copy();
   this.params   = loadProps().rideParametersByKey;
@@ -26,16 +26,16 @@ function HistoryPlot(div) {
 // this draws the history plot from scratch (called on init or window resize)
 HistoryPlot.prototype.load = function () {
 
-  var divSize = {'w': parseInt(d3.select("#div-history-plot").style('width')),
-                 'h': parseInt(d3.select("#div-history-plot").style('width'))/2};
+  var divSize = {'w': parseInt(d3.select("#history-plot-container").style('width')),
+                 'h': parseInt(d3.select("#history-plot-container").style('width'))/2};
   
-  var divPad = 0; 
-  var plotPad = {'h': 20, 'w': 50};
+  var divPad   = 0; 
+  var plotPad  = {'h': 20, 'w': 50};
   var plotSize = {'h': divSize.h - divPad, 'w': divSize.w - divPad};
 
-  d3.select("#div-history-plot").selectAll("svg").remove();
+  d3.select("#history-plot-container").selectAll("svg").remove();
 
-  var svg = d3.select("#div-history-plot")
+  var svg = d3.select("#history-plot-container")
           .append("svg")
           .attr("width", plotSize.w)
           .attr("height", plotSize.h)
@@ -60,10 +60,7 @@ HistoryPlot.prototype.load = function () {
 
   svg.append("path")
      .attr("class", "line-plot-path")
-     .attr("id", "conv-path")
-     .attr("stroke", "tomato")
-     .attr("stroke-width", 1.5)
-     .attr("fill", "none");
+     .attr("id", "conv-path");
  
   this.plotSize = plotSize;
   this.plotPad = plotPad;
@@ -85,12 +82,13 @@ HistoryPlot.prototype.draw = function () {
 
   var plotSize = this.plotSize,
       plotPad  = this.plotPad,
-      svg = this.svg;
+      svg = this.svg, 
+      dotRadius = 3;
 
   var xScale, xAxis, xGrid, yAxisLeft, yAxisRight, yScaleParam, yScaleConv, lineConv;
 
-  var date_i = d3.timeDay.offset(d3.min(this.rideDict.timestamp), 0),
-      date_f = d3.timeDay.offset(d3.max(this.rideDict.timestamp), 0);
+  var startDate = d3.timeDay.offset(d3.min(this.rideDict.timestamp), 0),
+      endDate   = d3.timeDay.offset(d3.max(this.rideDict.timestamp), 0);
 
   var convData = [];
   if (historyPlotConvType != "None") {
@@ -101,7 +99,7 @@ HistoryPlot.prototype.draw = function () {
                 );
   }
 
-  xScale = d3.scaleTime().range([plotPad.w, plotSize.w - plotPad.w]).domain([date_i, date_f]);
+  xScale = d3.scaleTime().range([plotPad.w, plotSize.w - plotPad.w]).domain([startDate, endDate]);
 
   xAxis = d3.axisBottom(xScale).ticks(d3.timeMonth.every(1)).tickFormat("").tickSize(0,0,0);
 
@@ -131,6 +129,9 @@ HistoryPlot.prototype.draw = function () {
     this.svg.select("#history-y-axis-right").attr("visibility", "visible");
   } 
 
+  // force the filled path back to the x-axis
+  convData.push({days: xScale.domain()[1], conv: yScaleConv.domain()[0], count: 1});
+
   var tickStep = params[historyPlotParameter].step;
 
   yAxisLeft = d3.axisLeft(yScaleParam)
@@ -139,7 +140,7 @@ HistoryPlot.prototype.draw = function () {
 
   yAxisRight = d3.axisRight(yScaleConv).tickSize(0,0,0).ticks(4);
 
-  if (historyPlotParameter === 'total_time_sec') {
+  if (historyPlotParameter==="total_time_sec") {
     yAxisLeft.tickFormat( function (sec) { return Math.floor(sec/3600) + "h"; });
     yAxisRight.tickFormat( function (sec) { return Math.floor(sec/3600) + "h"; });
   }
@@ -148,23 +149,20 @@ HistoryPlot.prototype.draw = function () {
   svg.select("#history-y-axis-left").transition().duration(500).call(yAxisLeft);
   svg.select("#history-y-axis-right").transition().duration(500).call(yAxisRight);
 
-  svg.select("#conv-path").transition().duration(500).attr("d", function(d) { return lineConv(convData); });
+  svg.select("#conv-path")
+     .transition().duration(500)
+     .attr("d", function () { return lineConv(convData); });
 
   svg.selectAll(".history-dot")
     .data(this.rideData)
     .enter().append("circle")
     .attr("class", "history-dot")
-    .attr("r", 5)
-    .attr("cx", function(d) { return xScale(d.timestamp); })
-    .attr("cy", function(d) { return yScaleParam(d[historyPlotParameter]); })
-    .style("fill", function(d) { return "#0066ff"; })
-    .style("opacity", .7)
-    .on("mouseover", function() { 
-      d3.select(this).attr("r", 7); })
-    .on("mouseout", function() { 
-      d3.select(this).attr("r", 5); })
-    .on("click", function(rideDataRow) { 
-      changeActivity(rideDataRow); });
+    .attr("r", dotRadius)
+    .attr("cx", function (d) { return xScale(d.timestamp); })
+    .attr("cy", function (d) { return yScaleParam(d[historyPlotParameter]); })
+    .on("mouseover", function() { d3.select(this).attr("r", dotRadius*2); })
+    .on("mouseout", function() {  d3.select(this).attr("r", dotRadius); })
+    .on("click", function (d) {  changeActivity(d); });
 
   svg.selectAll(".history-dot").transition().duration(500)
   .attr("cy", function(d) { return yScaleParam(d[historyPlotParameter]); });
@@ -188,10 +186,9 @@ HistoryPlot.prototype.draw = function () {
 HistoryPlot.prototype.update = function() {
 
     this.svg.selectAll(".history-dot")
-        .style("fill", "#0066ff")
-        .style("opacity", .7)
+        .classed("history-dot-selected", false)
         .filter(function (d) { return d.activity_id === DB.currentActivityInfo.activity_id; })
-        .style("fill", "orange").style("opacity", 1);
+        .classed("history-dot-selected", true);
     
 }
 
@@ -201,9 +198,9 @@ function createHistoryPlotControls(targetDiv) {
   targetDiv.select("form").remove();
   targetDiv.append("form").attr("class", "form-inline");
   targetDiv.select("form").append("div")
-           .attr("class", "form-group").attr("id", "div-history-controls");
+           .attr("class", "form-group").attr("id", "history-controls-container");
   
-  var formdiv = targetDiv.select("#div-history-controls");
+  var formdiv = targetDiv.select("#history-controls-container");
 
   var classStr = "form-control form-control-history";
 
@@ -241,7 +238,7 @@ function createHistoryPlotControls(targetDiv) {
   historySelectParameter.property("value", "total_distance");
   historySelectConvType.property("value", "Window");
   historySelectConvWindow.property("value", "30");
-  historySelectMeanOrSum.property("checked", false);
+  historySelectMeanOrSum.property("checked", true);
 
 }
 

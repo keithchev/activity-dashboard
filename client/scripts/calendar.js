@@ -259,13 +259,6 @@ function binActivities(dateList, parameterForColor) {
                   d.color = cellColor(d.paramSums[parameterForColor]).toString(); return d; });
 
   return ridesByDate;
-
-}
-
-
-function createCalendarTabs(div) {
-
-
 }
 
 

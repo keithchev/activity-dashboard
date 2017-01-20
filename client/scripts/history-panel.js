@@ -1,12 +1,12 @@
-
-
 function HistoryPlot(div) {
 
   this.div = div;
   this.div.selectAll("div").remove();
   this.div.selectAll("svg").remove();
 
-  createHistoryPlotControls(this.div);
+  var controlsContainer = div.append("div").attr("id", "history-controls-container");
+
+  createHistoryPlotControls(controlsContainer);
 
   div.append("div").attr("id", "history-plot-container");
 
@@ -16,10 +16,25 @@ function HistoryPlot(div) {
 
   var onChange = this.draw.bind(this);
 
-  d3.select("#history-select-parameter").on("change", onChange );
-  d3.select("#history-select-conv-type").on("change", onChange );
-  d3.select("#history-select-conv-window").on("change", onChange );
-  d3.select("#history-select-mean-or-sum").on("change", onChange );
+  var self = this;
+
+  d3.select("#history-select-parameter-y").on("change", onChange ).property("value", "total_distance");
+  d3.select("#history-select-parameter-color").on("change", onChange ).property("value", "normalized_power");
+
+  d3.select("#history-select-conv-window").on("change", onChange ).property("value", "30");
+
+  d3.select("#history-select-conv-type").selectAll(".tab-small").on("click", onClick );
+  d3.select("#history-select-mean-or-sum").selectAll(".tab-small").on("click", onClick );
+
+  d3.select("#history-select-conv-type").select(".tab-small").classed("tab-small-active", true);
+  d3.select("#history-select-mean-or-sum").select(".tab-small").classed("tab-small-active", true);
+
+
+  function onClick() {
+    d3.select(this.parentNode).selectAll(".tab-small").classed("tab-small-active", false);
+    d3.select(this).classed("tab-small-active", true);
+    self.draw();
+  }
 
 }
 
@@ -75,11 +90,12 @@ HistoryPlot.prototype.draw = function () {
 
   var params = loadProps().rideParametersByKey,
 
-     historyPlotConvWindow = d3.select("#history-select-conv-window").property("value"),
-     historyPlotParameter  = d3.select("#history-select-parameter").property("value"),
-     historyPlotConvType   = d3.select("#history-select-conv-type").property("value"),
-     historyPlotMeanOrSum  = d3.select("#history-select-mean-or-sum").property("checked"),
-     parameterForColor = d3.select("#calendar-select-parameter-color").property("value");
+     convWindow      = d3.select("#history-select-conv-window").property("value"),
+     plotParameterY  = d3.select("#history-select-parameter-y").property("value"),
+     plotParameterColor = d3.select("#history-select-parameter-color").property("value");
+
+     convType   = d3.select("#history-select-conv-type").select(".tab-small-active").text(),
+     meanOrSum  = d3.select("#history-select-mean-or-sum").select(".tab-small-active").text();
 
   var plotSize = this.plotSize,
       plotPad  = this.plotPad,
@@ -91,12 +107,11 @@ HistoryPlot.prototype.draw = function () {
   var startDate = d3.timeDay.offset(d3.min(this.rideDict.timestamp), 0),
       endDate   = d3.timeDay.offset(d3.max(this.rideDict.timestamp), 0);
 
-
-  var colorParam = "elevation_gain";
-  var colorParamMax = d3.max(this.rideData, function (d) { return d[colorParam]; });
+  var colorParamMax = d3.max(this.rideData, function (d) { return +d[plotParameterColor]; });
+  var colorParamMin = d3.min(this.rideData, function (d) { return +d[plotParameterColor] > 0 ? +d[plotParameterColor] : Infinity; });
 
   this.rideData.forEach(function (d) { 
-                  d.color = d3.interpolateBlues(d[colorParam]/colorParamMax).toString(); });
+                  d.color = d3.interpolateBlues(.3+(d[plotParameterColor] - colorParamMin)/(colorParamMax - colorParamMin)).toString(); });
 
    function interpolateNoMiddle(t,w) {
     t = (t > (.5-w) && t < .5) ? .5-w : t;
@@ -105,11 +120,11 @@ HistoryPlot.prototype.draw = function () {
    }
 
   var convData = [];
-  if (historyPlotConvType != "None") {
+  if (convType != "None") {
     convData = calcConvolution(
-                historyPlotConvType, 
-                historyPlotConvWindow*24*3600000, 
-                historyPlotParameter
+                convType, 
+                convWindow*24*3600000, 
+                plotParameterY
                 );
   }
 
@@ -123,11 +138,11 @@ HistoryPlot.prototype.draw = function () {
 
   yScaleParam = d3.scaleLinear()
                   .range([ plotSize.h - plotPad.h, plotPad.h ])
-                  .domain(params[historyPlotParameter].range);
+                  .domain(params[plotParameterY].range);
 
   yScaleConv = d3.scaleLinear()
                  .range([ plotSize.h - plotPad.h, plotPad.h ])
-                 .domain(params[historyPlotParameter].range); 
+                 .domain(params[plotParameterY].range); 
 
   lineConv = d3.line()
                .x(function(d) {return xScale(d.days); })
@@ -136,7 +151,7 @@ HistoryPlot.prototype.draw = function () {
 
   this.svg.select("#history-y-axis-right").attr("visibility", "hidden");
 
-  if (!historyPlotMeanOrSum) {
+  if (meanOrSum==="Sum") {
     convData = convData.map(function(d){ d.count = 1; return d; });
     yScaleConv.domain([ yScaleParam.domain()[0], d3.max(convData, function(d) { return d.conv/d.count; }) ]);
     this.svg.select("#history-y-axis-right").attr("visibility", "visible");
@@ -145,7 +160,7 @@ HistoryPlot.prototype.draw = function () {
   // force the filled path back to the x-axis
   convData.push({days: xScale.domain()[1], conv: yScaleConv.domain()[0], count: 1});
 
-  var tickStep = params[historyPlotParameter].step;
+  var tickStep = params[plotParameterY].step;
 
   yAxisLeft = d3.axisLeft(yScaleParam)
                 .tickValues(d3.range(tickStep, yScaleParam.domain()[1], tickStep))
@@ -153,7 +168,7 @@ HistoryPlot.prototype.draw = function () {
 
   yAxisRight = d3.axisRight(yScaleConv).tickSize(0,0,0).ticks(4);
 
-  if (historyPlotParameter==="total_time_sec") {
+  if (plotParameterY==="total_time_sec") {
     yAxisLeft.tickFormat( function (sec) { return Math.floor(sec/3600) + "h"; });
     yAxisRight.tickFormat( function (sec) { return Math.floor(sec/3600) + "h"; });
   }
@@ -172,14 +187,15 @@ HistoryPlot.prototype.draw = function () {
     .attr("class", "history-dot")
     .attr("r", dotRadius)
     .attr("cx", function (d) { return xScale(d.timestamp); })
-    .attr("cy", function (d) { return yScaleParam(d[historyPlotParameter]); })
+    .attr("cy", function (d) { return yScaleParam(d[plotParameterY]); })
     .attr("fill", function (d) { return d.color; })
     .on("mouseover", function() { d3.select(this).attr("r", dotRadius*2); })
     .on("mouseout", function() {  d3.select(this).attr("r", dotRadius); })
     .on("click", function (d) {  changeActivity(d); });
 
   svg.selectAll(".history-dot").transition().duration(500)
-  .attr("cy", function(d) { return yScaleParam(d[historyPlotParameter]); });
+  .attr("cy", function (d) { return yScaleParam(d[plotParameterY]); })
+  .attr("fill", function (d) { return d.color; });
 
   // remove the first y axis tick 
   d3.selectAll("#history-y-axis-left g").each( function() { 
@@ -206,53 +222,52 @@ HistoryPlot.prototype.update = function() {
     
 }
 
-function createHistoryPlotControls(targetDiv) {
+function createHistoryPlotControls(container) {
 
-  //we assume targetDiv is a d3 selection
-  targetDiv.select("form").remove();
-  targetDiv.append("form").attr("class", "form-inline");
-  targetDiv.select("form").append("div")
-           .attr("class", "form-group").attr("id", "history-controls-container");
+  container.select("form").remove();
+
+  var form = container.append("form").attr("class", "form-inline")
+                      .append("div").attr("class", "form-group");
   
-  var formdiv = targetDiv.select("#history-controls-container");
+  // ---- parameter ----
+  var selectableParams = loadProps().rideParameters.filter( function(row) { return row.range.length!=0; });
 
-  var classStr = "form-control form-control-history";
+  form.append("label").attr("class", "label-history").text("Y: ");
+  form.append("select")
+      .attrs({class: "form-control form-control-history", id: "history-select-parameter-y"})
+      .selectAll("option").data(selectableParams)
+      .enter().append("option")
+      .attr("value", function (d) { return d.key; })
+      .text(function (d) { return d.label; });
 
-  formdiv.append("label").attr("for", "history-select-parameter").attr("class", "label-history").text("Parameter: ");
-  formdiv.append("select").attr("class", classStr).attr("id", "history-select-parameter");
+  form.append("label").attr("class", "label-history").text("Color: ");
+  form.append("select")
+      .attrs({class: "form-control form-control-history", id: "history-select-parameter-color"})
+      .selectAll("option").data(selectableParams)
+      .enter().append("option")
+      .attr("value", function (d) { return d.key; })
+      .text(function (d) { return d.label; });
 
-  formdiv.append("label").attr("for", "history-select-conv-type").attr("class", "label-history").text("Convolution type: ");
-  formdiv.append("select").attr("class", classStr).attr("id", "history-select-conv-type");
-  
-  formdiv.append("label").attr("for", "history-select-conv-window").attr("class", "label-history").text("Window size: ");
-  formdiv.append("input").attr("class", classStr).attr("id", "history-select-conv-window");
+  // ---- convolution type ---- 
+  form.append("div").attrs({class: "history-tab-container", id: "history-select-conv-type"})
+      .selectAll("tab-small").data(["Window", "Exponential"])
+      .enter().append("div")
+      .attrs({class: "tab-small"})
+      .text(function (d) { return d; });
 
-  formdiv.append("label").attr("for", "history-select-mean-or-sum").attr("class", "label-history").text("Show mean: ");
-  formdiv.append("input").attr("type", "checkbox").attr("class", classStr).attr("id", "history-select-mean-or-sum");
+  // ---- window size ----
+  form.append("label").attr("class", "label-history").text("Window size: ");
+  form.append("input")
+      .attr("class", "form-control form-control-history")
+      .attr("id", "history-select-conv-window");
 
-  var historySelectParameter  = d3.select("#history-select-parameter"),
-      historySelectConvType   = d3.select("#history-select-conv-type"),
-      historySelectConvWindow = d3.select("#history-select-conv-window"),
-      historySelectMeanOrSum  = d3.select("#history-select-mean-or-sum");
+  // ---- mean or sum ----
+  form.append("div").attrs({class: "history-tab-container", id: "history-select-mean-or-sum"})
+      .selectAll("tab-small").data(["Mean", "Sum"])
+      .enter().append("div")
+      .attrs({class: "tab-small"})
+      .text(function (d) { return d; });
 
-  selectableParams = loadProps().rideParameters.filter( function(row) { return row.range.length!=0; });
-  
-  historySelectParameter.selectAll("option")
-                .data(selectableParams)
-                .enter().append("option")
-                .attr("value", function(d) { return d.key; })
-                .text(function(d) { return d.label; });
-
-  historySelectConvType.selectAll("option")
-                   .data(["None", "Window", "Exponential"])
-                   .enter().append("option")
-                   .attr("value", function (d) { return d; })
-                   .text(function(d) { return d; }); 
-
-  historySelectParameter.property("value", "total_distance");
-  historySelectConvType.property("value", "Window");
-  historySelectConvWindow.property("value", "30");
-  historySelectMeanOrSum.property("checked", true);
 
 }
 
@@ -262,8 +277,8 @@ function calcConvolution(convType, windowSize, param) {
 
   var rideData = DB.rideData.copy();
 
-  if (convType === "Window") { calcConvWeight = convWeightWindow; }
-  if (convType === "Exponential") {calcConvWeight = convWeightExp; }
+  if (convType==="Window") { calcConvWeight = convWeightWindow; }
+  if (convType==="Exponential") {calcConvWeight = convWeightExp; }
 
   var windowSizeInDays = Math.ceil(windowSize / (3600000 * 24));
 
@@ -304,4 +319,5 @@ function convWeightExp(dt, windowSize) {
   dt = (dt < neg_one_day) ? windowSize : dt;
   return (dt < windowSize) ? Math.exp(-dt / windowSize) : 0;
 }
+
 

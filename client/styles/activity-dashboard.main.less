@@ -2,6 +2,7 @@
 
 @orange: #ffe9c3; //#ffd080;
 @light-orange: #ffefd3;
+@v-light-orange: #fff6e8;
 
 @border-color: #ccc;
 
@@ -252,7 +253,7 @@ display: inline-block;
   display: inline-block;
   cursor: pointer;
   &:hover {
-    background-color:@light-orange;
+    background-color: @v-light-orange;
   }
 }
 
@@ -265,6 +266,28 @@ display: inline-block;
   }
 }
 
+.tab-small {
+  font-size: 12px;
+  width: auto;
+  margin-left: 5px;
+  margin-right: 5px;
+  padding-top: 5px;
+  padding-bottom: 0px;
+  text-align: center;
+  display: inline-block;
+  cursor: pointer;
+  &:hover {
+    background-color: @v-light-orange;
+  }
+}
+
+.tab-small-active {
+  font-weight: bold;
+  background-color: @orange;
+  &:hover {
+    background-color: @orange;
+  }
+}
 
 // ------------------------------------------------------
 // 
@@ -300,6 +323,10 @@ display: inline-block;
   .controls-container;
 }
 
+.history-tab-container {
+  display: inline-block;
+}
+
 .label-history { 
   margin: 0px;
   font-size: 12px; 
@@ -318,7 +345,7 @@ display: inline-block;
 #conv-path {
   stroke: none;
   stroke-width: 2px;
-  fill: #999; //#ffc9c0;
+  fill: #bbb; //#ffc9c0;
   opacity: .5;
 }
 

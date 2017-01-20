@@ -30,7 +30,7 @@ function drawActivityDetail() {
     var jsonFile = "getActivityData.php?type=detail&id=" + DB.currentActivityInfo.activity_id;
 
     // if no postgres server 
-    var NO_DB = true;
+    var NO_DB = false;
     if (NO_DB) {
       jsonFile = "http://127.0.0.1:7777/dev2/activity-dashboard/ignore/test_activity_id=20151231110101.json";
     }

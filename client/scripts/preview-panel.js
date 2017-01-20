@@ -140,7 +140,7 @@ function loadMap() {
   var ridePoints = [];
 
   d3.json("getActivityData.php?type=preview&id=" + DB.currentActivityInfo.activity_id, function(err, data) {
-  
+  debugger;
     if (!err) {
 
       for (i = 0; i < data.length; i++) {

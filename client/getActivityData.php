@@ -12,7 +12,7 @@ $activityID = isset($_GET["id"]) ? $_GET["id"] : 0;
 $tableType = isset($_GET["type"]) ? $_GET["type"] : "preview";
 
 
-if ($_SERVER["REMOTE_ADDR"]=='127.0.0.1') {
+if ($_SERVER["REMOTE_ADDR"]=='127.0.0.1' || $_SERVER["REMOTE_ADDR"]=='192.168.1.101') {
 	$db_connection = pg_connect("host=localhost dbname=cycling user=postgres password=brc");
 } else {
 	$db_connection = pg_connect("host=cyclingpostgres.local dbname=cycling user=250742 password=pgc6646");

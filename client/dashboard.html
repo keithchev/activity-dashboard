@@ -309,7 +309,7 @@
       row.total_time_sec = total_time_as_date.getHours()*60*60 + total_time_as_date.getMinutes()*60 + total_time_as_date.getSeconds();
 
       row.intensity_factor      = row.normalized_power / CYCLIST_FTP;
-      row.training_stress_score = 100 * (row.total_time_sec/3600.) * row.intensity_factor**2 ;
+      row.training_stress_score = 100 * (row.total_time_sec/3600.) * Math.pow(row.intensity_factor, 2) ;
 
       row.total_calories = row.total_work * 1.1;
 

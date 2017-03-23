@@ -6,7 +6,7 @@ December 2016<br>
 See the live version [here](http://kchev.org/activity-dashboard/client) or click below. 
 
 <a href="http://kchev.org/activity-dashboard/client">
-<img width="600px" src="http://kchev.org/activity-dashboard/client/img/screenshot.png" alt="screenshot">
+<img width="600px" src="http://kchev.org/activity-dashboard/client/img/screenshot.jpg" alt="screenshot">
 </a>
 
 ## Introduction

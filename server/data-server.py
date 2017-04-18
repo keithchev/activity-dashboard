@@ -52,7 +52,7 @@ def loadData():
 
 if __name__=='__main__':
     
-    nfsFlag = 
+    nfsFlag = False
     app.run(debug=True)
     
     

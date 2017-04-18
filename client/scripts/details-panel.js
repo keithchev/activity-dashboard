@@ -952,7 +952,7 @@ function processRideDetailData(rideDetailData) {
   var rideDetailData_ = [];
 
   // hard-coded subsample rate (not strictly by timestamp but by row)
-  var SUBSAMPLE_RATE = 1;
+  var SUBSAMPLE_RATE = 3;
 
 
   rideDetailData.forEach(function (row, index) {

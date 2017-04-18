@@ -127,7 +127,7 @@
   };
   
   d3.queue()
-    .defer(d3.csv, "./data/activity-metadata")
+    .defer(d3.csv, "./data/activity-metadata.csv")
     .defer(d3.csv, "./data/2016_preview_merged.csv")
     .await( function(e, rideData, previewData) { 
     

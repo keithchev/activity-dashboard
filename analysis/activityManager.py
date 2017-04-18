@@ -150,7 +150,7 @@ class ActivityList:
 			# column names
 			coordsSubsample.columns = ['lon', 'lat', 'id']
 			
-			writeActivityCSV(coordsSubsample, csvPreviewFilename)	   
+			self.writeActivityCSV(coordsSubsample, csvPreviewFilename)	   
 			
 			print('subsampling %s' % csvFilename)
 		
@@ -170,7 +170,7 @@ class ActivityList:
 				continue
 			mergedData = pd.concat([mergedData, data])
 			
-		writeActivityCSV(mergedData, self.rootDir + 'activities_preview_merged.csv')
+		self.writeActivityCSV(mergedData, self.rootDir + 'activities_preview_merged.csv')
 		return
 
 # end class ActivityList

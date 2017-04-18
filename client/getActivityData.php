@@ -12,7 +12,7 @@ $activityID = isset($_GET["id"]) ? $_GET["id"] : 0;
 $tableType = isset($_GET["type"]) ? $_GET["type"] : "preview";
 
 
-if ($_SERVER["REMOTE_ADDR"]=='127.0.0.1' || $_SERVER["REMOTE_ADDR"]=='192.168.1.101') {
+if ($_SERVER["REMOTE_ADDR"]=="127.0.0.1" || $_SERVER["REMOTE_ADDR"]=="192.168.1.101") {
 	$db_connection = pg_connect("host=localhost dbname=cycling user=postgres password=brc");
 } else {
 	$db_connection = pg_connect("host=cyclingpostgres.local dbname=cycling user=250742 password=pgc6646");
@@ -20,7 +20,7 @@ if ($_SERVER["REMOTE_ADDR"]=='127.0.0.1' || $_SERVER["REMOTE_ADDR"]=='192.168.1.
 
 if ($tableType=="preview") {
 	
-	$result = pg_query($db_connection, "SELECT lat,lon FROM activities_preview WHERE id=$activityID");
+	$result = pg_query($db_connection, "SELECT lat,lon FROM activities_preview WHERE id='$activityID'");
 	$data = array();
 	
 	while ($row = pg_fetch_array($result)) { 
@@ -36,7 +36,7 @@ if ($tableType=="preview") {
 	}
 
 } elseif ($tableType=="detail") {
-	$result = pg_query($db_connection, "SELECT alt,cad,dst,hrt,lat,lon,pwr,spd,tmp,sec FROM activities_detail WHERE id=$activityID");
+	$result = pg_query($db_connection, "SELECT alt,cad,dst,hrt,lat,lon,pwr,spd,tmp,sec FROM activities_detail WHERE id='$activityID'");
 	$data = array();
 
 	while ($row = pg_fetch_array($result)) { 

@@ -5,7 +5,7 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 import rdp
-from fitFileUtils import *
+import fit_utils
 from datetime import datetime
 
 
@@ -17,33 +17,33 @@ class ActivityList(object):
 		if root_dir is None:
 			root_dir = 'E:\\Dropbox\\_projects-gh\\activity-dashboard\\data\\'
 
-		self.activityDir        = root_dir + 'activities' + os.sep
-		self.activityPreviewDir = root_dir + 'activities_preview' + os.sep
+		self.activity_dir        = root_dir + 'activities' + os.sep
+		self.activity_preview_Dir = root_dir + 'activities_preview' + os.sep
 
 		self.CSVs = glob.glob(root_dir + 'activities\\*.csv')
 		self.FITs = glob.glob(root_dir + 'activities\\*.fit')
 
-		self.metadataFilename = root_dir + 'metadata.csv'
+		self.metadata_filename = root_dir + 'metadata.csv'
 		self.root_dir = root_dir
 
 
 	# def update(self):
 	# 	''' update everything when new activities (FIT files) are added '''
 	# 	self.batchFITtoCSV()
-	#	self.generateActivityIds()
+	#	self.generateactivity_ids()
 	# 	self.updateMetadata()
 	# 	self.makePreviewCSVs()
 
 
-	def previewPath(self, csvFilename):
-		return self.activityPreviewDir + csvFilename.split(os.sep)[-1].replace('.csv', '_preview.csv')
+	def preview_path(self, csv_filename):
+		return self.activity_preview_dir + csv_filename.split(os.sep)[-1].replace('.csv', '_preview.csv')
 
 	def FILENAME_TO_ID(self, filename):
 		''' simple algorithm to generate a unique ID from an activity filename '''
 		return 'id' + filename.split('\\')[-1].split('.')[0].replace('-','')	
 
 
-	def writeActivityCSV(self, data, filename):
+	def write_activity_csv(self, data, filename):
 		''' write an activity dataFrame to CSV '''
 
 		# 6-decimal float precision is required for lat/lon coordinates
@@ -55,129 +55,129 @@ class ActivityList(object):
 		data.to_csv(filename, index=False, float_format='%0.6f')
 
 
-	def batchFITtoCSV(self):
+	def batch_fit_to_csv(self):
 
-		for fitFilename in self.FITs:
-			if os.path.isfile(fitFilename.replace('fit', 'csv')):
+		for fit_filename in self.FITs:
+			if os.path.isfile(fit_filename.replace('fit', 'csv')):
 				continue
 
-			print('Converting %s to CSV' % fitFilename)
+			print('Converting %s to CSV' % fit_filename)
 
-			fitFileStructure = loadFIT(fitFilename)
-			fitData = dataFromFIT(fitFileStructure)
+			fit_structure = fit_utils.load_fit(fit_filename)
+			fit_data = fit_utils.data_from_fit(fit_structure)
 
-			self.writeActivityCSV(fitData, fitFilename.replace('.fit', '.csv'))
+			self.write_activity_csv(fit_data, fit_filename.replace('.fit', '.csv'))
 
 
 
-	def updateMetadata(self):
+	def update_metadata(self):
 		''' add new csv files (written from new FIT files) to the existing metadata file '''
 		
-		activityMetadata = pd.read_csv(self.metadataFilename)
-		for csvFilename in self.CSVs:
+		activity_metadata = pd.read_csv(self.metadata_filename)
+		for csv_filename in self.CSVs:
 
-			activityId = self.FILENAME_TO_ID(csvFilename)
-			if activityId in list(activityMetadata.activity_id):
+			activity_id = self.FILENAME_TO_ID(csv_filename)
+			if activity_id in list(activity_metadata.activity_id):
 				continue
 			
-			print('Updating metadata for %s' % csvFilename)
+			print('Updating metadata for %s' % csv_filename)
 				
-			params, activityId = calcActivityParamsFromCSV(csvFilename)
-			params['filename']    = csvFilename
-			params['activity_id'] = activityId
-			activityMetadata = activityMetadata.append(params, ignore_index=True)
+			params, activity_id = activity_params_from_csv(csv_filename)
+			params['filename']    = csv_filename
+			params['activity_id'] = activity_id
+			activity_metadata = activity_metadata.append(params, ignore_index=True)
 
-		self.writeActivityCSV(activityMetadata, self.metadataFilename)
+		self.write_activity_csv(activity_metadata, self.metadata_filename)
 
 
-	def createMetadata(self):
+	def create_metadata(self):
 		''' generate metadata file and add calculated stats from each FIT-derived CSV file 
 		overwrites existing metdata file '''
 
-		activityMetadata = pd.DataFrame(columns=['filename', 'activity_id'])
-		activityMetadata['filename'] = self.CSVs
+		activity_metadata = pd.DataFrame(columns=['filename', 'activity_id'])
+		activity_metadata['filename'] = self.CSVs
 
-		for ind, row in activityMetadata.iterrows():
-			csvFilename = row['filename']
-			print('Adding fields to metadata for %s' % csvFilename)
+		for ind, row in activity_metadata.iterrows():
+			csv_filename = row['filename']
+			print('Adding fields to metadata for %s' % csv_filename)
 			
-			params, activityId = calcActivityParamsFromCSV(csvFilename)
+			params, activity_id = activity_params_from_csv(csv_filename)
 
-			activityMetadata['activity_id'][ind] = activityId
+			activity_metadata['activity_id'][ind] = activity_id
 
 			for key in params.keys():
-				if key not in activityMetadata.keys():
-					activityMetadata[key] = float(0)
-				activityMetadata[key][ind] = params[key]
+				if key not in activity_metadata.keys():
+					activity_metadata[key] = float(0)
+				activity_metadata[key][ind] = params[key]
 
-		self.writeActivityCSV(activityMetadata, self.metadataFilename)
+		self.write_activity_csv(activity_metadata, self.metadata_filename)
 
 
-	def generateActivityIds(self, rewriteIdsFlag=False):			
+	def generate_activity_ids(self, rewrite_ids=False):			
 		''' generate unique activity id and add it to each activity's CSV fiel '''
 
-		for csvFilename in self.CSVs:
+		for csv_filename in self.CSVs:
 
-			data = pd.read_csv(csvFilename)
-			activityId = self.FILENAME_TO_ID(csvFilename)
+			data = pd.read_csv(csv_filename)
+			activity_id = self.FILENAME_TO_ID(csv_filename)
 
-			if 'id' not in data.keys() or rewriteIdsFlag:
-				data['id'] = activityId
-				self.writeActivityCSV(data, csvFilename)
+			if 'id' not in data.keys() or rewrite_ids:
+				data['id'] = activity_id
+				self.write_activity_csv(data, csv_filename)
 		
-				print("creating id for %s; id: %s" % (csvFilename.split(os.sep)[-1], activityId))
+				print("creating id for %s; id: %s" % (csv_filename.split(os.sep)[-1], activity_id))
 		
 
-	def makePreviewCSVs(self):
+	def make_preview_csvs(self):
 		''' downsample lat/lon coords using rdp algorithm to generate small preview tracks '''
 
-		for csvFilename in self.CSVs:
+		for csv_filename in self.CSVs:
 			
-			csvPreviewFilename = self.previewPath(csvFilename)
-			if os.path.isfile(csvPreviewFilename):
+			csv_preview_filename = self.preview_path(csv_filename)
+			if os.path.isfile(csv_preview_filename):
 				continue
 			
-			data   = pd.read_csv(csvFilename)
+			data   = pd.read_csv(csv_filename)
 			coords = np.array(data[['lon', 'lat']])
 			
 			# subsample the lat/lon coords using rdp algorithm
 			# epsilon=.0005 seems to be a good compromise for displaying a 300px square map
 			# subsampling by ::3 speeds up the RDP algorithm and doesn't reduce any detail
-			coordsSubsample = pd.DataFrame(rdp.rdp(coords[::3,:], epsilon=.0005))
+			coords_sub = pd.DataFrame(rdp.rdp(coords[::3,:], epsilon=.0005))
 		
-			coordsSubsample['id'] = data['id'][0]
+			coords_sub['id'] = data['id'][0]
 
 			# column names
-			coordsSubsample.columns = ['lon', 'lat', 'id']
+			coords_sub.columns = ['lon', 'lat', 'id']
 			
-			self.writeActivityCSV(coordsSubsample, csvPreviewFilename)	   
+			self.write_activity_csv(coords_sub, csv_preview_filename)	   
 			
-			print('subsampling %s' % csvFilename)
+			print('subsampling %s' % csv_filename)
 		
 		# remake the concatenated preview CSV file
-		self.catPreviewCSVs()
+		self.cat_preview_csvs()
 			
 
-	def catPreviewCSVs(self):
-		''' cat downsampled tracks into a single file '''
+	def cat_preview_csvs(self):
+		''' concatenate downsampled tracks into a single file '''
 
-		mergedData = []
-		for csvFilename in self.CSVs:
-			data = pd.read_csv(self.previewPath(csvFilename))
+		merged_data = []
+		for csv_filename in self.CSVs:
+			data = pd.read_csv(self.preview_path(csv_filename))
 
-			if not len(mergedData):
-				mergedData = data
+			if not len(merged_data):
+				merged_data = data
 				continue
-			mergedData = pd.concat([mergedData, data])
+			merged_data = pd.concat([merged_data, data])
 			
-		self.writeActivityCSV(mergedData, self.root_dir + 'activities_preview_merged.csv')
+		self.write_activity_csv(merged_data, self.root_dir + 'activities_preview_merged.csv')
 		return
 
 # end class ActivityList
 
 
 
-def calcActivityParamsFromCSV(activity):
+def activity_params_from_csv(activity):
     ''' calc various activities stats from a FIT-file-derived CSV file '''
     
     if type(activity) is str:
@@ -185,7 +185,7 @@ def calcActivityParamsFromCSV(activity):
     else:
         data = activity
         
-    activityId = data['id'][0]
+    activity_id = data['id'][0]
     params = {}
 
     FEET_PER_MILE  = 5280.    
@@ -222,14 +222,14 @@ def calcActivityParamsFromCSV(activity):
     params['total_work']       = pwr.sum()/1000. # in kJ
     params['average_power']    = pwr.mean()
     
-    pwrMovingAv = calcPwrMovingAverage(data)
+    pwr_ma = moving_average(data, 'pwr')
     
-    params['normalized_power'] = (pwrMovingAv[~np.isnan(pwrMovingAv)]**4).mean()**.25
+    params['normalized_power'] = (pwr_ma[~np.isnan(pwr_ma)]**4).mean()**.25
     
-    return params, activityId
+    return params, activity_id
         
     
-def calcPwrMovingAverage(data):
+def moving_average(data, field='pwr'):
     ''' here we average the raw power data in a window
     this is the first step in calculating normalized power '''
     
@@ -239,7 +239,7 @@ def calcPwrMovingAverage(data):
     dt = data.sec.diff()
     dt[0] = 0
     
-    pwr_window = np.array(data.pwr)*float('nan')
+    window = np.array(data[field])*float('nan')
     
     for ind in np.arange(0, data.shape[0], 30):
         
@@ -254,16 +254,16 @@ def calcPwrMovingAverage(data):
             continue
         
         # crop a region of interest
-        pwr_crop        = data.pwr[ind:ind + ROI_SIZE]
-        pwr_window_crop = pwr_window[ind:ind + ROI_SIZE]
+        data_crop   = data[field][ind:ind + ROI_SIZE]
+        window_crop = window[ind:ind + ROI_SIZE]
             
         # assign the mean power in this window to every time point in pwr_window
-        pwr_window_crop[elapsed_time <= WINDOW_SIZE] = pwr_crop[elapsed_time <= WINDOW_SIZE].mean()
+        window_crop[elapsed_time <= WINDOW_SIZE] = data_crop[elapsed_time <= WINDOW_SIZE].mean()
         
         # insert this chunk of mean power back into the full pwr_window array
-        pwr_window[ind:ind + ROI_SIZE] = pwr_window_crop
+        window[ind:ind + ROI_SIZE] = window_crop
         
-    return pwr_window
+    return window
 
 
 

@@ -13,7 +13,7 @@ def load_fit(filename):
     return fit_file_structure
 
 
-def dataFromFIT(fit_file_structure):
+def data_from_fit(fit_file_structure):
     
     records = fit_file_structure.get_messages('record')
     

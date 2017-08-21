@@ -6,19 +6,18 @@ import scipy as sp
 import pandas as pd
 from fitparse import FitFile
 
-def loadFIT(fitFilename):
+def load_fit(filename):
     
-    fitFileStructure = FitFile(fitFilename)
-    fitFileStructure.parse()
+    fit_file_structure = FitFile(filename)
+    fit_file_structure.parse()
+    return fit_file_structure
 
-    return fitFileStructure
 
-
-def dataFromFIT(fitFileStructure):
+def dataFromFIT(fit_file_structure):
     
-    records = fitFileStructure.get_messages('record')
+    records = fit_file_structure.get_messages('record')
     
-    fitData = {}
+    fit_data = {}
     
     fields    = ('time', 
                  'lat',
@@ -31,7 +30,7 @@ def dataFromFIT(fitFileStructure):
                  'cad',
                  'tmp')
                  
-    garminFields = (
+    garmin_fields = (
                  'timestamp',
                  'position_lat',  # semicircles
                  'position_long', # semicircles
@@ -44,32 +43,32 @@ def dataFromFIT(fitFileStructure):
                  'temperature'    # deg C
                  )
                  
-    semicirclesToDeg = 180.0/(2**31)
+    semicircles_to_deg = 180.0/(2**31)
     
-    for field in fields: fitData[field] = []
+    for field in fields: fit_data[field] = []
     
     # load all the field values (if not present in the record, list entry will be None)
     for record in records:
-        for field, garminField in zip(fields, garminFields):
-            fitData[field].append(record.get_value(garminField))
+        for field, garmin_field in zip(fields, garmin_fields):
+            fit_data[field].append(record.get_value(garmin_fields))
             
     # convert lat/lon to decimal degrees (from semicircles)
-    fitData['lat'] = [None if lat is None else lat * semicirclesToDeg for lat in fitData['lat']]
-    fitData['lon'] = [None if lon is None else lon * semicirclesToDeg for lon in fitData['lon']]
+    fit_data['lat'] = [None if lat is None else lat * semicircles_to_deg for lat in fit_data['lat']]
+    fit_data['lon'] = [None if lon is None else lon * semicircles_to_deg for lon in fit_data['lon']]
     
     # add an elapsed time field (in seconds)
     # DataFrame converts time to a time object
     # explicit way: data['time'] = [datetime.strptime(t, '%Y-%m-%d %H:%M:%S') for t in data['time']]
     
-    fitData = pd.DataFrame(fitData)
-    dt = fitData['time'] - fitData['time'][0]
-    fitData['sec'] = [t/np.timedelta64(1,'s') for t in dt]
+    fit_data = pd.DataFrame(fit_data)
+    dt = fit_data['time'] - fit_data['time'][0]
+    fit_data['sec'] = [t/np.timedelta64(1,'s') for t in dt]
     
-#    fitData['sec'] = fitData['sec'].astype('int16')
-#    fitData['cad'] = fitData['cad'].astype('int16')
-#    fitData['pwr'] = fitData['pwr'].astype('int16')
-#    fitData['hrt'] = fitData['hrt'].astype('int16')    
-#    fitData['tmp'] = fitData['tmp'].astype('int16')    
+#    fit_data['sec'] = fit_data['sec'].astype('int16')
+#    fit_data['cad'] = fit_data['cad'].astype('int16')
+#    fit_data['pwr'] = fit_data['pwr'].astype('int16')
+#    fit_data['hrt'] = fit_data['hrt'].astype('int16')    
+#    fit_data['tmp'] = fit_data['tmp'].astype('int16')    
 
-    return fitData
+    return fit_data
     

@@ -10,21 +10,21 @@ from datetime import datetime
 
 
 
-class ActivityList:
+class ActivityList(object):
 
-	def __init__(self, rootDir=None):
+	def __init__(self, root_dir=None):
 
-		if rootDir is None:
-			rootDir = 'E:\\Dropbox\\_projects-gh\\activity-dashboard\\data\\'
+		if root_dir is None:
+			root_dir = 'E:\\Dropbox\\_projects-gh\\activity-dashboard\\data\\'
 
-		self.activityDir        = rootDir + 'activities' + os.sep
-		self.activityPreviewDir = rootDir + 'activities_preview' + os.sep
+		self.activityDir        = root_dir + 'activities' + os.sep
+		self.activityPreviewDir = root_dir + 'activities_preview' + os.sep
 
-		self.CSVs = glob.glob(rootDir + 'activities\\*.csv')
-		self.FITs = glob.glob(rootDir + 'activities\\*.fit')
+		self.CSVs = glob.glob(root_dir + 'activities\\*.csv')
+		self.FITs = glob.glob(root_dir + 'activities\\*.fit')
 
-		self.metadataFilename = rootDir + 'metadata.csv'
-		self.rootDir = rootDir
+		self.metadataFilename = root_dir + 'metadata.csv'
+		self.root_dir = root_dir
 
 
 	# def update(self):
@@ -170,7 +170,7 @@ class ActivityList:
 				continue
 			mergedData = pd.concat([mergedData, data])
 			
-		self.writeActivityCSV(mergedData, self.rootDir + 'activities_preview_merged.csv')
+		self.writeActivityCSV(mergedData, self.root_dir + 'activities_preview_merged.csv')
 		return
 
 # end class ActivityList

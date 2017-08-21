@@ -5,7 +5,7 @@ import pandas as pd
 import psycopg2
 
 
-def copyCSVToPostgres(csvDir, nfsFlag=False, writeFullTable=False):
+def csv_to_postgres(csv_dir, nfs_flag=False, write_full_table=False):
 
     # local
     pg_settings_loc = {'user': 'postgres', 
@@ -21,7 +21,7 @@ def copyCSVToPostgres(csvDir, nfsFlag=False, writeFullTable=False):
                       'port': 5432, 
                       'dbname': 'cycling'}
 
-    if nfsFlag:
+    if nfs_flag:
         settings = pg_settings_nfs
     else:
         settings = pg_settings_loc
@@ -41,19 +41,19 @@ def copyCSVToPostgres(csvDir, nfsFlag=False, writeFullTable=False):
     cur.execute("""CREATE TABLE activities_preview (lat decimal, lon decimal, id varchar);""")
     
     # copy the preview (downsampled) CSVs into the table
-    csvFilenames = glob.glob(csvDir + os.sep + 'activities_preview' + os.sep + '*.csv')
+    csvs = glob.glob(csv_dir + os.sep + 'activities_preview' + os.sep + '*.csv')
 
-    print(csvDir + os.sep + 'activities_preview' + os.sep + '*.csv')
+    print(csv_dir + os.sep + 'activities_preview' + os.sep + '*.csv')
 
-    if not len(csvFilenames):
+    if not len(csvs):
         print('No CSVs found!')
         return 
 
-    for csvFilename in csvFilenames:
-        print('Copying %s' % csvFilename)
-        cur.execute(""" COPY activities_preview FROM %s CSV HEADER """, (csvFilename,))
+    for csv in csvs:
+        print('Copying %s' % csv)
+        cur.execute(""" COPY activities_preview FROM %s CSV HEADER """, (csv,))
 
-    if not writeFullTable:
+    if not write_full_table:
         return
 
     # delete the full (detailed) table in the cycling database if it exists
@@ -86,22 +86,22 @@ def copyCSVToPostgres(csvDir, nfsFlag=False, writeFullTable=False):
     cur.execute(sql_create)
 
     # code duplicated from above for now
-    csvFilenames = glob.glob(csvDir + os.sep + 'activities' + os.sep + '*.csv')
-    if not len(csvFilenames):
+    csvs = glob.glob(csv_dir + os.sep + 'activities' + os.sep + '*.csv')
+    if not len(csvs):
         print('No CSVs found!')
         return 
 
-    for csvFilename in csvFilenames:
-        print('Copying %s' % csvFilename)
-        cur.execute(""" COPY activities_detail FROM %s CSV HEADER """, (csvFilename,))
+    for csv in csvs:
+        print('Copying %s' % csv)
+        cur.execute(""" COPY activities_detail FROM %s CSV HEADER """, (csv,))
 
 
 if __name__ == '__main__':
 
-    csvDir = sys.argv[1]
-    nfsFlag = bool(int(sys.argv[2])) # 0 for false
+    csv_dir = sys.argv[1]
+    nfs_flag = bool(int(sys.argv[2])) # 0 for false
 
-    copyCSVToPostgres(csvDir, nfsFlag=nfsFlag, writeFullTable=True)
+    csv_to_postgres(csv_dir, nfs_flag=nfs_flag, write_full_table=True)
 
 
 # run locally:

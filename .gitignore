@@ -1,5 +1,6 @@
-ignore
-server
+ignore/
+server/
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

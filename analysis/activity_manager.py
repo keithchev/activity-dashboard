@@ -17,8 +17,8 @@ class ActivityList(object):
 		if root_dir is None:
 			root_dir = 'E:\\Dropbox\\_projects-gh\\activity-dashboard\\data\\'
 
-		self.activity_dir        = root_dir + 'activities' + os.sep
-		self.activity_preview_Dir = root_dir + 'activities_preview' + os.sep
+		self.activity_dir = root_dir + 'activities' + os.sep
+		self.activity_preview_dir = root_dir + 'activities_preview' + os.sep
 
 		self.CSVs = glob.glob(root_dir + 'activities\\*.csv')
 		self.FITs = glob.glob(root_dir + 'activities\\*.fit')
@@ -38,20 +38,26 @@ class ActivityList(object):
 	def preview_path(self, csv_filename):
 		return self.activity_preview_dir + csv_filename.split(os.sep)[-1].replace('.csv', '_preview.csv')
 
-	def FILENAME_TO_ID(self, filename):
-		''' simple algorithm to generate a unique ID from an activity filename '''
-		return 'id' + filename.split('\\')[-1].split('.')[0].replace('-','')	
+
+	def filename_to_id(self, filename):
+		''' generate a unique ID from an activity filename '''
+		
+		# old method
+		# return 'id' + filename.split('\\')[-1].split('.')[0].replace('-','')	
+
+		return hash(filename)
 
 
 	def write_activity_csv(self, data, filename):
-		''' write an activity dataFrame to CSV '''
+		''' write an activity dataFrame to CSV 
 
-		# 6-decimal float precision is required for lat/lon coordinates
-		# latitude accuracy: from 38 to 38.000001 is about 0.11 meters
-		# longitude accuracy: from -122 to -122.000001 is 0.09 meters
+		6-decimal float precision is required for lat/lon coordinates:
+			latitude accuracy from 38 to 38.000001 is about 0.11 meters
+			longitude accuracy from -122 to -122.000001 is 0.09 meters
 
-		# note: None entries are turned into nan by pandas
+		Note that None entries are turned into nan by pandas
 
+		'''
 		data.to_csv(filename, index=False, float_format='%0.6f')
 
 
@@ -74,9 +80,9 @@ class ActivityList(object):
 		''' add new csv files (written from new FIT files) to the existing metadata file '''
 		
 		activity_metadata = pd.read_csv(self.metadata_filename)
-		for csv_filename in self.CSVs:
 
-			activity_id = self.FILENAME_TO_ID(csv_filename)
+		for csv_filename in self.CSVs:
+			activity_id = self.filename_to_id(csv_filename)
 			if activity_id in list(activity_metadata.activity_id):
 				continue
 			
@@ -91,8 +97,12 @@ class ActivityList(object):
 
 
 	def create_metadata(self):
-		''' generate metadata file and add calculated stats from each FIT-derived CSV file 
-		overwrites existing metdata file '''
+		''' 
+		Generate metadata file and add calculated stats from each FIT-derived CSV file 
+
+		*** overwrites existing metdata file ***
+
+		'''
 
 		activity_metadata = pd.DataFrame(columns=['filename', 'activity_id'])
 		activity_metadata['filename'] = self.CSVs
@@ -113,13 +123,14 @@ class ActivityList(object):
 		self.write_activity_csv(activity_metadata, self.metadata_filename)
 
 
+
 	def generate_activity_ids(self, rewrite_ids=False):			
-		''' generate unique activity id and add it to each activity's CSV fiel '''
+		''' generate unique activity id and add it to each activity's CSV file '''
 
 		for csv_filename in self.CSVs:
 
 			data = pd.read_csv(csv_filename)
-			activity_id = self.FILENAME_TO_ID(csv_filename)
+			activity_id = self.filename_to_id(csv_filename)
 
 			if 'id' not in data.keys() or rewrite_ids:
 				data['id'] = activity_id
@@ -127,6 +138,7 @@ class ActivityList(object):
 		
 				print("creating id for %s; id: %s" % (csv_filename.split(os.sep)[-1], activity_id))
 		
+
 
 	def make_preview_csvs(self):
 		''' downsample lat/lon coords using rdp algorithm to generate small preview tracks '''
@@ -154,12 +166,12 @@ class ActivityList(object):
 			
 			print('subsampling %s' % csv_filename)
 		
-		# remake the concatenated preview CSV file
+		# rebuild the concatenated preview file
 		self.cat_preview_csvs()
 			
 
 	def cat_preview_csvs(self):
-		''' concatenate downsampled tracks into a single file '''
+		'''  '''
 
 		merged_data = []
 		for csv_filename in self.CSVs:

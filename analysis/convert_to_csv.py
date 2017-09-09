@@ -114,7 +114,7 @@ def tcx_to_csv():
 
 
 
-def gpx_to_csv(dirname_or_filename, activity_type, debug_flag=False):
+def gpx_to_csv(dirname_or_filename, activity_type='Ride', debug_flag=False):
     '''
     cConvert GPX downloaded from Strava (via bulk download) to CSV
     This is now (August 2017) useful, since Strava finally includes powermeter data in GPX

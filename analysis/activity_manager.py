@@ -8,7 +8,13 @@ import rdp
 import fit_utils
 from datetime import datetime
 
-
+# --------------------------------------------------------------------
+#
+# NOTE: there are broken references in ActivityList because f
+# ile reading utilities and analysis utilities (like interpolation) 
+# have been moved from activity-dashboard to cypy
+#
+# --------------------------------------------------------------------
 
 class ActivityList(object):
 
@@ -241,44 +247,6 @@ def activity_params_from_csv(activity):
     return params, activity_id
         
     
-def moving_average(data, field='pwr'):
-    ''' here we average the raw power data in a window
-    this is the first step in calculating normalized power '''
-    
-    # window size used in Coggan et al (30 seconds)
-    WINDOW_SIZE = 30 # **in seconds**
-    
-    dt = data.sec.diff()
-    dt[0] = 0
-    
-    window = np.array(data[field])*float('nan')
-    
-    for ind in np.arange(0, data.shape[0], 30):
-        
-        # here we assume that dt is rarely less than one second to define an ROI that will span the window
-        ROI_SIZE = WINDOW_SIZE + 10
-        
-        # relative elapsed time (from window start at ind)
-        elapsed_time = np.cumsum(np.array(dt[ind:ind + ROI_SIZE]))
-        
-        # skip this window if it contains too few data point - i.e., window spans a long pause
-        if ( (elapsed_time < WINDOW_SIZE).sum() < 10 ):
-            continue
-        
-        # crop a region of interest
-        data_crop   = data[field][ind:ind + ROI_SIZE]
-        window_crop = window[ind:ind + ROI_SIZE]
-            
-        # assign the mean power in this window to every time point in pwr_window
-        window_crop[elapsed_time <= WINDOW_SIZE] = data_crop[elapsed_time <= WINDOW_SIZE].mean()
-        
-        # insert this chunk of mean power back into the full pwr_window array
-        window[ind:ind + ROI_SIZE] = window_crop
-        
-    return window
-
-
-
 
     
     
